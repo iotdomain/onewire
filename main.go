@@ -1,6 +1,6 @@
 package main
 
-import "iotconnect.onewire/src"
+import "iotc.onewire/src"
 
 func main() {
 	src.Run()

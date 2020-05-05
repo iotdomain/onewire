@@ -1,9 +1,9 @@
-module iotconnect.onewire
+module iotc.onewire
 
 go 1.13
 
 require (
-	github.com/hspaay/iotconnect.golang v0.0.0-20200416041144-e5d7862c6985
+	github.com/hspaay/iotc.golang v0.0.0-20200416041144-e5d7862c6985
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.5.0
 	github.com/stretchr/testify v1.5.1
@@ -12,5 +12,5 @@ require (
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
 
-// Temporary for testing iotconnect.golang
-replace github.com/hspaay/iotconnect.golang => ../iotconnect.golang
+// Temporary for testing iotc.golang
+replace github.com/hspaay/iotc.golang => ../iotc.golang

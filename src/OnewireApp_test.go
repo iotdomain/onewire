@@ -27,17 +27,19 @@ func TestLoadConfig(t *testing.T) {
 	t.Log("Testing loading config")
 	// create app and load its configs
 	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	err := persist.LoadAppConfig(TestConfigFolder, OnewireAppID, appConfig)
+	err := persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
 	assert.NoError(t, err)
-	err = persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
+
+	err = persist.LoadAppConfig(TestConfigFolder, OnewireAppID, appConfig)
 	assert.NoError(t, err)
 
 	// create publisher and load its node configuration
 	pub := publisher.NewPublisher(zoneID, testMessenger, TestConfigFolder)
 	var nodeMap map[string]*nodes.Node
 	err = persist.LoadNodes(TestConfigFolder, appConfig.PublisherID, &nodeMap)
-	pub.Nodes.UpdateNodes(nodeMap)
 	assert.NoError(t, err)
+	pub.Nodes.UpdateNodes(nodeMap)
+
 	pubNode := pub.Nodes.GetNodeByID(zoneID, pub.PublisherNode.ID, messaging.PublisherNodeID)
 	assert.NotNil(t, pubNode, "Missing publisher node")
 
@@ -66,13 +68,16 @@ func TestReadEds(t *testing.T) {
 }
 
 func TestPollOnce(t *testing.T) {
-	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
+	persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
+	// var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
+	var testMessenger = messenger.NewMqttMessenger(messengerConfig, nil)
 	err := persist.LoadAppConfig(TestConfigFolder, OnewireAppID, appConfig)
 	if !assert.NoError(t, err) {
 		return
 	}
-	pub := publisher.NewPublisher(zoneID, testMessenger, "")
+	pub := publisher.NewPublisher(appConfig.PublisherID, testMessenger, TestConfigFolder)
 	app := NewOnewireApp(appConfig, pub)
+	app.SetupGatewayNode(pub)
 
 	assert.NoError(t, err)
 	pub.Start()

@@ -85,7 +85,7 @@ func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
 		return
 	}
 	// Is this a new device?
-	device := app.pub.GetNode(id)
+	device := app.pub.GetNodeByID(id)
 	if device == nil {
 
 		// crude determination of device type
@@ -117,7 +117,7 @@ func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
 // gwParams are the parameters as per EDS XML output
 // Returns the gateway device node
 func (app *OnewireApp) updateGateway(gwParams map[string]string) *nodes.Node {
-	gwNode := app.pub.GetNode(app.gatewayAddr)
+	gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayAddr)
 	app.pub.Nodes.SetNodeAttr(app.gatewayAddr, map[messaging.NodeAttr]string{
 		messaging.NodeAttrMAC:          gwParams["MACAddress"],
 		messaging.NodeAttrHostname:     gwParams["HostName"],
@@ -145,7 +145,7 @@ func (app *OnewireApp) updateGateway(gwParams map[string]string) *nodes.Node {
 func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// read the EDS gateway amd update the gateway state when disconnected
 	nodeList := app.pub.Nodes
-	gwNode := app.pub.GetNode(app.gatewayAddr)
+	gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayAddr)
 	if gwNode == nil {
 		app.log.Error("Poll: gateway node not created")
 		return

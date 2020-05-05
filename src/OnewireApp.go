@@ -19,7 +19,8 @@ const GatewayID = "gateway"
 
 // OnewireAppConfig with application state, loaded from onewire.conf
 type OnewireAppConfig struct {
-	PublisherID string `yaml:"publisherid"` // default is app ID
+	PublisherID string `yaml:"publisherid"`    // default is app ID
+	GatewayAddr string `yaml:"gatewayaddress"` // default gateway IP address
 }
 
 // OnewireApp publisher app
@@ -31,8 +32,8 @@ type OnewireApp struct {
 	gatewayAddr string // gateway node address
 }
 
-// DiscoverOnewireNodes polls the gateway for onewire nodes and publishes any discoveries
-func (app *OnewireApp) DiscoverOnewireNodes(pub *publisher.Publisher) {
+// SetupGatewayNode creates the gateway node if it doesn't exist
+func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	app.log.Info("DiscoverNodes:")
 
 	app.gatewayAddr = nodes.MakeNodeDiscoveryAddress(app.pub.ZoneID, app.config.PublisherID, GatewayID)
@@ -41,7 +42,7 @@ func (app *OnewireApp) DiscoverOnewireNodes(pub *publisher.Publisher) {
 	if gatewayNode == nil {
 		gatewayNode := nodes.NewNode(app.pub.ZoneID, app.config.PublisherID, GatewayID, messaging.NodeTypeGateway)
 
-		config := nodes.NewConfigAttr(messaging.NodeAttrAddress, messaging.DataTypeString, "EDS Gateway IP address", "")
+		config := nodes.NewConfigAttr(messaging.NodeAttrAddress, messaging.DataTypeString, "EDS Gateway IP address", app.config.GatewayAddr)
 		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
 
 		config = nodes.NewConfigAttr(messaging.NodeAttrLoginName, messaging.DataTypeString, "Login name of the onewire gateway", "")
@@ -51,6 +52,7 @@ func (app *OnewireApp) DiscoverOnewireNodes(pub *publisher.Publisher) {
 		config = nodes.NewConfigAttr(messaging.NodeAttrPassword, messaging.DataTypeString, "Secret password of the onewire gateway", "")
 		config.Secret = true
 		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
+		pub.Nodes.UpdateNode(gatewayNode)
 	}
 
 	// Onewire OWS Gateway is a node with configuration for address, login name and credentials
@@ -60,7 +62,7 @@ func (app *OnewireApp) DiscoverOnewireNodes(pub *publisher.Publisher) {
 
 // OnNodeConfigHandler handles requests to update node configuration
 func (app *OnewireApp) OnNodeConfigHandler(node *nodes.Node, config messaging.NodeAttrMap) messaging.NodeAttrMap {
-	return nil
+	return config
 }
 
 // NewOnewireApp creates the weather app
@@ -91,7 +93,7 @@ func Run() {
 	app := NewOnewireApp(appConfig, onewirePub)
 
 	// Discover the node(s) and outputs. Use default for republishing discovery
-	onewirePub.SetDiscoveryInterval(0, app.DiscoverOnewireNodes)
+	onewirePub.SetDiscoveryInterval(0, app.SetupGatewayNode)
 	// Update the forecast once an hour
 	onewirePub.SetPollInterval(3600, app.Poll)
 

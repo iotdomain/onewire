@@ -1,43 +1,43 @@
-// Package src queries the EDS for device, node and parameter information
-package src
+// Package internal queries the EDS for device, node and parameter information
+package internal
 
 import (
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/hspaay/iotc.golang/messaging"
+	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/nodes"
 	"github.com/hspaay/iotc.golang/publisher"
 )
 
 // family to device type. See also: http://owfs.sourceforge.net/simple_family.html
-var deviceTypeMap = map[string]messaging.NodeType{
-	"10": messaging.NodeTypeThermometer,
-	"28": messaging.NodeTypeThermometer,
-	"7E": messaging.NodeTypeMultiSensor,
+var deviceTypeMap = map[string]iotc.NodeType{
+	"10": iotc.NodeTypeThermometer,
+	"28": iotc.NodeTypeThermometer,
+	"7E": iotc.NodeTypeMultiSensor,
 }
 
 // SensorTypeMap attribute name map to sensor types
 var SensorTypeMap = map[string]string{
-	"BarometricPressureMb": messaging.OutputTypeAtmosphericPressure,
-	"Dewpoint":             messaging.OutputTypeDewpoint,
-	"HeatIndex":            messaging.OutputTypeHeatIndex,
-	"Humidity":             messaging.OutputTypeHumidity,
-	"Humidex":              messaging.OutputTypeHumidex,
-	"Light":                messaging.OutputTypeLuminance, // lux
-	"Relay":                messaging.OutputTypeContact,
-	"Temperature":          messaging.OutputTypeTemperature,
+	"BarometricPressureMb": iotc.OutputTypeAtmosphericPressure,
+	"Dewpoint":             iotc.OutputTypeDewpoint,
+	"HeatIndex":            iotc.OutputTypeHeatIndex,
+	"Humidity":             iotc.OutputTypeHumidity,
+	"Humidex":              iotc.OutputTypeHumidex,
+	"Light":                iotc.OutputTypeLuminance, // lux
+	"Relay":                iotc.OutputTypeContact,
+	"Temperature":          iotc.OutputTypeTemperature,
 }
-var unitNameMap = map[string]messaging.Unit{
-	"PercentRelativeHumidity": messaging.UnitPercent,
-	"Millibars":               messaging.UnitMillibar,
-	"Centigrade":              messaging.UnitCelcius,
-	"Fahrenheit":              messaging.UnitFahrenheit,
-	"InchesOfMercury":         messaging.UnitMercury,
-	"Lux":                     messaging.UnitLux,
-	"#":                       messaging.UnitCount,
-	"Volt":                    messaging.UnitVolt,
+var unitNameMap = map[string]iotc.Unit{
+	"PercentRelativeHumidity": iotc.UnitPercent,
+	"Millibars":               iotc.UnitMillibar,
+	"Centigrade":              iotc.UnitCelcius,
+	"Fahrenheit":              iotc.UnitFahrenheit,
+	"InchesOfMercury":         iotc.UnitMercury,
+	"Lux":                     iotc.UnitLux,
+	"#":                       iotc.UnitCount,
+	"Volt":                    iotc.UnitVolt,
 }
 
 // updateSensor. A new or existing sensor has been seen
@@ -54,23 +54,23 @@ func (app *OnewireApp) updateSensor(node *nodes.Node, sensorNode *XMLNode) {
 		return
 	}
 
-	output := app.pub.Outputs.GetOutput(node, sensorType, messaging.DefaultOutputInstance)
+	output := app.pub.Outputs.GetOutput(node, sensorType, iotc.DefaultOutputInstance)
 	if output == nil {
 		// convert OneWire EDS data type to IoTConnect output types
 		rawUnit := sensorNode.Units
-		output = nodes.NewOutput(node, sensorType, messaging.DefaultOutputInstance)
+		output = nodes.NewOutput(node, sensorType, iotc.DefaultOutputInstance)
 		output.Unit = unitNameMap[rawUnit]
 		app.pub.Outputs.UpdateOutput(output)
 
 		// writable devices also have an input
 		if sensorNode.Writable == "True" {
-			input := nodes.NewInput(node, sensorType, messaging.DefaultInputInstance)
+			input := nodes.NewInput(node, sensorType, iotc.DefaultInputInstance)
 			app.pub.Inputs.UpdateInput(input)
 		}
 	}
 
 	newVal := string(sensorNode.Content)
-	app.pub.OutputValues.UpdateOutputValue(node, sensorType, messaging.DefaultOutputInstance, newVal)
+	app.pub.OutputValues.UpdateOutputValue(node, sensorType, iotc.DefaultOutputInstance, newVal)
 }
 
 // updateDevice. A new or existing onewire device has been seen.
@@ -91,20 +91,20 @@ func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
 		// crude determination of device type
 		deviceType := deviceTypeMap[props["Family"]]
 		if deviceType == "" {
-			deviceType = messaging.NodeTypeUnknown // can we determine this?
+			deviceType = iotc.NodeTypeUnknown // can we determine this?
 		}
-		device = nodes.NewNode(app.pub.ZoneID, app.config.PublisherID, id, deviceType)
+		device = nodes.NewNode(app.pub.Zone, app.config.PublisherID, id, deviceType)
 		// device = app.pub.Nodes.AddNode(id, nodes.NodeType(deviceType))
 	}
 
 	// An EDS device xml has an attribute Description that contains the product description
 	// Additional properties can be found in subnodes Name, Family, ROMId, Health, Channel
-	app.pub.Nodes.SetNodeAttr(device.Address, map[messaging.NodeAttr]string{
-		messaging.NodeAttrAddress:     id,
-		messaging.NodeAttrDescription: deviceNode.Description,
-		messaging.NodeAttrModel:       props["Name"],
-		"Health":                      props["Health"],
-		"Channel":                     props["Channel"],
+	app.pub.Nodes.SetNodeAttr(device.Address, map[iotc.NodeAttr]string{
+		iotc.NodeAttrAddress:     id,
+		iotc.NodeAttrDescription: deviceNode.Description,
+		iotc.NodeAttrModel:       props["Name"],
+		"Health":                 props["Health"],
+		"Channel":                props["Channel"],
 	})
 	//Publish newly discovered sensors and update the values of previously discovered properties
 	for _, propXML := range deviceNode.Nodes {
@@ -118,15 +118,15 @@ func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
 // Returns the gateway device node
 func (app *OnewireApp) updateGateway(gwParams map[string]string) *nodes.Node {
 	gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayAddr)
-	app.pub.Nodes.SetNodeAttr(app.gatewayAddr, map[messaging.NodeAttr]string{
-		messaging.NodeAttrMAC:          gwParams["MACAddress"],
-		messaging.NodeAttrHostname:     gwParams["HostName"],
-		messaging.NodeAttrManufacturer: "Embedded Data Systems (EDS)",
-		messaging.NodeAttrModel:        gwParams["DeviceName"],
+	app.pub.Nodes.SetNodeAttr(app.gatewayAddr, map[iotc.NodeAttr]string{
+		iotc.NodeAttrMAC:          gwParams["MACAddress"],
+		iotc.NodeAttrHostname:     gwParams["HostName"],
+		iotc.NodeAttrManufacturer: "Embedded Data Systems (EDS)",
+		iotc.NodeAttrModel:        gwParams["DeviceName"],
 	})
 
 	// OWServer ENet specific attributes. These could be sensors if there is a need
-	app.pub.Nodes.SetNodeStatus(app.gatewayAddr, map[messaging.NodeStatus]string{
+	app.pub.Nodes.SetNodeStatus(gwNode, map[iotc.NodeStatus]string{
 		"DevicesConnected":         gwParams["DevicesConnected"],
 		"DevicesConnectedChannel1": gwParams["DevicesConnectedChannel1"],
 		"DevicesConnectedChannel2": gwParams["DevicesConnectedChannel2"],
@@ -151,9 +151,9 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 		return
 	}
 	edsAPI := app.edsAPI
-	edsAPI.address, _ = gwNode.GetConfigValue(messaging.NodeAttrAddress)
-	edsAPI.loginName, _ = gwNode.GetConfigValue(messaging.NodeAttrLoginName)
-	edsAPI.password, _ = gwNode.GetConfigValue(messaging.NodeAttrPassword)
+	edsAPI.address, _ = gwNode.GetConfigValue(iotc.NodeAttrAddress)
+	edsAPI.loginName, _ = gwNode.GetConfigValue(iotc.NodeAttrLoginName)
+	edsAPI.password, _ = gwNode.GetConfigValue(iotc.NodeAttrPassword)
 	if edsAPI.address == "" {
 		err := errors.New("a Gateway address has not been configured")
 		app.log.Infof(err.Error())
@@ -174,9 +174,9 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// (re)discover the nodes on the gateway
 	gwParams, deviceNodes := edsAPI.ParseNodeParams(rootNode)
 	app.updateGateway(gwParams)
-	nodeList.SetNodeRunState(gwNode.Address, messaging.NodeRunStateReady)
-	nodeList.SetNodeStatus(gwNode.Address, map[messaging.NodeStatus]string{
-		messaging.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency*time.Millisecond),
+	nodeList.SetNodeRunState(gwNode, iotc.NodeRunStateReady)
+	nodeList.SetNodeStatus(gwNode, map[iotc.NodeStatus]string{
+		iotc.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency*time.Millisecond),
 	})
 
 	// (re)discover any new sensor nodes and publish when changed
@@ -186,7 +186,7 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// in case configuration changes
 
 	// in case configuration changes
-	newPollInterval, err := app.pub.PublisherNode.GetConfigInt(messaging.NodeAttrPollInterval)
+	newPollInterval, err := app.pub.PublisherNode().GetConfigInt(iotc.NodeAttrPollInterval)
 	if err == nil {
 		app.pub.SetPollInterval(newPollInterval, app.Poll)
 	}

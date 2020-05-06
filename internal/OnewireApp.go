@@ -1,7 +1,7 @@
-package src
+package internal
 
 import (
-	"github.com/hspaay/iotc.golang/messaging"
+	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/messenger"
 	"github.com/hspaay/iotc.golang/nodes"
 	"github.com/hspaay/iotc.golang/persist"
@@ -9,13 +9,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OnewireAppID application name used for configuration file and default publisherID
-const OnewireAppID = "onewire"
+// AppID application name used for configuration file and default publisherID
+const AppID = "onewire"
 
 // GatewayID with nodeId of the EDS gateway
 const GatewayID = "gateway"
 
-// const zoneID = messaging.LocalZoneID
+// const zoneID = iotc.LocalZoneID
 
 // OnewireAppConfig with application state, loaded from onewire.conf
 type OnewireAppConfig struct {
@@ -36,20 +36,20 @@ type OnewireApp struct {
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	app.log.Info("DiscoverNodes:")
 
-	app.gatewayAddr = nodes.MakeNodeDiscoveryAddress(app.pub.ZoneID, app.config.PublisherID, GatewayID)
+	app.gatewayAddr = nodes.MakeNodeDiscoveryAddress(app.pub.Zone, app.config.PublisherID, GatewayID)
 
 	gatewayNode := pub.Nodes.GetNodeByAddress(app.gatewayAddr)
 	if gatewayNode == nil {
-		gatewayNode := nodes.NewNode(app.pub.ZoneID, app.config.PublisherID, GatewayID, messaging.NodeTypeGateway)
+		gatewayNode := nodes.NewNode(app.pub.Zone, app.config.PublisherID, GatewayID, iotc.NodeTypeGateway)
 
-		config := nodes.NewConfigAttr(messaging.NodeAttrAddress, messaging.DataTypeString, "EDS Gateway IP address", app.config.GatewayAddr)
+		config := nodes.NewConfigAttr(iotc.NodeAttrAddress, iotc.DataTypeString, "EDS Gateway IP address", app.config.GatewayAddr)
 		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
 
-		config = nodes.NewConfigAttr(messaging.NodeAttrLoginName, messaging.DataTypeString, "Login name of the onewire gateway", "")
+		config = nodes.NewConfigAttr(iotc.NodeAttrLoginName, iotc.DataTypeString, "Login name of the onewire gateway", "")
 		config.Secret = true
 		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
 
-		config = nodes.NewConfigAttr(messaging.NodeAttrPassword, messaging.DataTypeString, "Secret password of the onewire gateway", "")
+		config = nodes.NewConfigAttr(iotc.NodeAttrPassword, iotc.DataTypeString, "Secret password of the onewire gateway", "")
 		config.Secret = true
 		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
 		pub.Nodes.UpdateNode(gatewayNode)
@@ -61,7 +61,7 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 }
 
 // OnNodeConfigHandler handles requests to update node configuration
-func (app *OnewireApp) OnNodeConfigHandler(node *nodes.Node, config messaging.NodeAttrMap) messaging.NodeAttrMap {
+func (app *OnewireApp) OnNodeConfigHandler(node *nodes.Node, config iotc.NodeAttrMap) iotc.NodeAttrMap {
 	return config
 }
 
@@ -72,7 +72,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 		pub:    pub,
 		log:    pub.Logger,
 	}
-	app.config.PublisherID = OnewireAppID
+	app.config.PublisherID = AppID
 	return &app
 }
 
@@ -85,10 +85,10 @@ func Run() {
 	persist.LoadMessengerConfig(configFolder, &messengerConfig)
 	messenger := messenger.NewMessenger(&messengerConfig, logger)
 
-	appConfig := &OnewireAppConfig{PublisherID: OnewireAppID}
-	persist.LoadAppConfig(configFolder, OnewireAppID, appConfig)
+	appConfig := &OnewireAppConfig{PublisherID: AppID}
+	persist.LoadAppConfig(configFolder, AppID, appConfig)
 
-	onewirePub := publisher.NewPublisher(appConfig.PublisherID, messenger, configFolder)
+	onewirePub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, messenger, configFolder)
 
 	app := NewOnewireApp(appConfig, onewirePub)
 

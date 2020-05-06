@@ -1,10 +1,10 @@
-package src
+package internal
 
 import (
 	"testing"
 	"time"
 
-	"github.com/hspaay/iotc.golang/messaging"
+	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/messenger"
 	"github.com/hspaay/iotc.golang/nodes"
 	"github.com/hspaay/iotc.golang/persist"
@@ -12,15 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const zoneID = "zone1"
 const configFolder = ""
 const gwAddress = "10.3.3.33"
 
-const TestConfigFolder = "test"
-const Node1Id = "node1"
+const TestConfigFolder = "../test"
+const Node1Id = GatewayID
 
-var messengerConfig = &messenger.MessengerConfig{}
-var appConfig = &OnewireAppConfig{}
+var messengerConfig = &messenger.MessengerConfig{Zone: "test"}
+var appConfig = &OnewireAppConfig{PublisherID: AppID}
 
 // TestLoadConfig load a node from config
 func TestLoadConfig(t *testing.T) {
@@ -30,20 +29,21 @@ func TestLoadConfig(t *testing.T) {
 	err := persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
 	assert.NoError(t, err)
 
-	err = persist.LoadAppConfig(TestConfigFolder, OnewireAppID, appConfig)
+	err = persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
 	assert.NoError(t, err)
 
 	// create publisher and load its node configuration
-	pub := publisher.NewPublisher(zoneID, testMessenger, TestConfigFolder)
-	var nodeMap map[string]*nodes.Node
-	err = persist.LoadNodes(TestConfigFolder, appConfig.PublisherID, &nodeMap)
+	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, TestConfigFolder)
+	var nodeList []*nodes.Node
+	err = persist.LoadNodes(TestConfigFolder, appConfig.PublisherID, &nodeList)
 	assert.NoError(t, err)
-	pub.Nodes.UpdateNodes(nodeMap)
+	assert.Len(t, nodeList, 2, "Expected 2 nodes")
+	pub.Nodes.UpdateNodes(nodeList)
 
-	pubNode := pub.Nodes.GetNodeByID(zoneID, pub.PublisherNode.ID, messaging.PublisherNodeID)
+	pubNode := pub.Nodes.GetNodeByID(messengerConfig.Zone, pub.ID(), iotc.PublisherNodeID)
 	assert.NotNil(t, pubNode, "Missing publisher node")
 
-	device := pub.Nodes.GetNodeByID(zoneID, pub.PublisherNode.ID, Node1Id)
+	device := pub.Nodes.GetNodeByID(messengerConfig.Zone, pub.ID(), Node1Id)
 	assert.NotNil(t, device, "Node 1 not loaded") // 1 device
 }
 
@@ -53,9 +53,9 @@ func TestLoadConfig(t *testing.T) {
 func TestReadEds(t *testing.T) {
 	// persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
 	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	persist.LoadAppConfig(TestConfigFolder, OnewireAppID, appConfig)
+	persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
 
-	pub := publisher.NewPublisher(zoneID, testMessenger, "")
+	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, "")
 
 	edsAPI := EdsAPI{
 		address: gwAddress,
@@ -71,11 +71,11 @@ func TestPollOnce(t *testing.T) {
 	persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
 	// var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
 	var testMessenger = messenger.NewMqttMessenger(messengerConfig, nil)
-	err := persist.LoadAppConfig(TestConfigFolder, OnewireAppID, appConfig)
+	err := persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
 	if !assert.NoError(t, err) {
 		return
 	}
-	pub := publisher.NewPublisher(appConfig.PublisherID, testMessenger, TestConfigFolder)
+	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, TestConfigFolder)
 	app := NewOnewireApp(appConfig, pub)
 	app.SetupGatewayNode(pub)
 

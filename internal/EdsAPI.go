@@ -1,5 +1,5 @@
-// Package src Eds API methods
-package src
+// Package internal Eds API methods
+package internal
 
 import (
 	"encoding/xml"

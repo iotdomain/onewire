@@ -6,7 +6,6 @@ import (
 
 	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/messenger"
-	"github.com/hspaay/iotc.golang/nodes"
 	"github.com/hspaay/iotc.golang/persist"
 	"github.com/hspaay/iotc.golang/publisher"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +33,7 @@ func TestLoadConfig(t *testing.T) {
 
 	// create publisher and load its node configuration
 	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, TestConfigFolder)
-	var nodeList []*nodes.Node
+	var nodeList []*iotc.NodeDiscoveryMessage
 	err = persist.LoadNodes(TestConfigFolder, appConfig.PublisherID, &nodeList)
 	assert.NoError(t, err)
 	assert.Len(t, nodeList, 2, "Expected 2 nodes")

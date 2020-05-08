@@ -61,7 +61,7 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 }
 
 // OnNodeConfigHandler handles requests to update node configuration
-func (app *OnewireApp) OnNodeConfigHandler(node *nodes.Node, config iotc.NodeAttrMap) iotc.NodeAttrMap {
+func (app *OnewireApp) OnNodeConfigHandler(node *iotc.NodeDiscoveryMessage, config iotc.NodeAttrMap) iotc.NodeAttrMap {
 	return config
 }
 

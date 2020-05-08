@@ -45,7 +45,7 @@ var unitNameMap = map[string]iotc.Unit{
 // This publishes updates to the sensor value except when the sensor is configured as disabled
 // Limitations:
 //   This only identifies sensors with a unit. Writable is not supported.
-func (app *OnewireApp) updateSensor(node *nodes.Node, sensorNode *XMLNode) {
+func (app *OnewireApp) updateSensor(node *iotc.NodeDiscoveryMessage, sensorNode *XMLNode) {
 	rawName := sensorNode.XMLName.Local
 
 	// only handle known input types
@@ -116,7 +116,7 @@ func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
 // Update the one-wire gateway device status
 // gwParams are the parameters as per EDS XML output
 // Returns the gateway device node
-func (app *OnewireApp) updateGateway(gwParams map[string]string) *nodes.Node {
+func (app *OnewireApp) updateGateway(gwParams map[string]string) *iotc.NodeDiscoveryMessage {
 	gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayAddr)
 	app.pub.Nodes.SetNodeAttr(app.gatewayAddr, map[iotc.NodeAttr]string{
 		iotc.NodeAttrMAC:          gwParams["MACAddress"],
@@ -151,9 +151,9 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 		return
 	}
 	edsAPI := app.edsAPI
-	edsAPI.address, _ = gwNode.GetConfigValue(iotc.NodeAttrAddress)
-	edsAPI.loginName, _ = gwNode.GetConfigValue(iotc.NodeAttrLoginName)
-	edsAPI.password, _ = gwNode.GetConfigValue(iotc.NodeAttrPassword)
+	edsAPI.address, _ = nodes.GetNodeConfigValue(gwNode, iotc.NodeAttrAddress)
+	edsAPI.loginName, _ = nodes.GetNodeConfigValue(gwNode, iotc.NodeAttrLoginName)
+	edsAPI.password, _ = nodes.GetNodeConfigValue(gwNode, iotc.NodeAttrPassword)
 	if edsAPI.address == "" {
 		err := errors.New("a Gateway address has not been configured")
 		app.log.Infof(err.Error())
@@ -186,7 +186,8 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// in case configuration changes
 
 	// in case configuration changes
-	newPollInterval, err := app.pub.PublisherNode().GetConfigInt(iotc.NodeAttrPollInterval)
+	node := app.pub.PublisherNode()
+	newPollInterval, err := nodes.GetNodeConfigInt(node, iotc.NodeAttrPollInterval)
 	if err == nil {
 		app.pub.SetPollInterval(newPollInterval, app.Poll)
 	}

@@ -1,38 +1,33 @@
 [
   {
-    "node": {
-      "id": "$publisher",
-      "address": "test/onewire/$publisher/$node",
-      "identity": {
-        "address": "test/onewire/$publisher/$node",
-        "expires": "",
-        "location": "",
-        "organization": "",
-        "publicKeyCrypto": "",
-        "publicKeySigning": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMu716JA//btOgpeZBqofFKAZnH2Y\nF2n+wUI/mb7h0JDV1gVKZPctYLQueXn2YyvTmcENRKlxlnSG58knI9AdLw==\n-----END PUBLIC KEY-----\n",
-        "publisher": "onewire",
-        "timestamp": "2020-05-02T10:26:29.861-0700",
-        "url": "",
-        "zone": "test"
-      },
-      "publisher": "onewire",
-      "runstate": "",
-      "type": "adapter",
-      "zone": "test"
-    }
+    "id": "gateway",
+    "address": "test/onewire/gateway/$node",
+    "publisher": "onewire",
+    "runstate": "error",
+    "status": {
+      "lasterror": "a Gateway address has not been configured"
+    },
+    "type": "gateway",
+    "zone": "test"
   },
   {
-    "node": {
-      "id": "gateway",
-      "address": "test/onewire/gateway/$node",
+    "id": "$publisher",
+    "address": "test/onewire/$publisher/$node",
+    "identity": {
+      "address": "test/onewire/$publisher/$node",
+      "expires": "",
+      "location": "",
+      "organization": "",
+      "publicKeyCrypto": "",
+      "publicKeySigning": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/hmdJvwxtVRBZqP6Iy/KgEuclY8r\n7bcjK+yNCWctdrdibhCPMhEdxbzzWh5zwD2LoH9o+hPCvU+qTHNWqkkk+Q==\n-----END PUBLIC KEY-----\n",
       "publisher": "onewire",
-      "runstate": "error",
-      "status": {
-        "lasterror": "a Gateway address has not been configured"
-      },
-      "type": "gateway",
+      "timestamp": "2020-05-07T15:56:23.614-0700",
+      "url": "",
       "zone": "test"
-    }
-  
+    },
+    "publisher": "onewire",
+    "runstate": "",
+    "type": "adapter",
+    "zone": "test"
   }
 ]

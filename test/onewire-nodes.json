@@ -1,16 +1,5 @@
 [
   {
-    "id": "gateway",
-    "address": "test/onewire/gateway/$node",
-    "publisher": "onewire",
-    "runstate": "error",
-    "status": {
-      "lasterror": "a Gateway address has not been configured"
-    },
-    "type": "gateway",
-    "zone": "test"
-  },
-  {
     "id": "$publisher",
     "address": "test/onewire/$publisher/$node",
     "identity": {
@@ -28,6 +17,17 @@
     "publisher": "onewire",
     "runstate": "",
     "type": "adapter",
+    "zone": "test"
+  },
+  {
+    "id": "gateway",
+    "address": "test/onewire/gateway/$node",
+    "publisher": "onewire",
+    "runstate": "error",
+    "status": {
+      "lasterror": "a Gateway address has not been configured"
+    },
+    "type": "gateway",
     "zone": "test"
   }
 ]

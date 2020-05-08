@@ -32,12 +32,10 @@ func TestLoadConfig(t *testing.T) {
 	assert.NoError(t, err)
 
 	// create publisher and load its node configuration
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, TestConfigFolder)
-	var nodeList []*iotc.NodeDiscoveryMessage
-	err = persist.LoadNodes(TestConfigFolder, appConfig.PublisherID, &nodeList)
+	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
+	err = pub.PersistNodes(TestConfigFolder, false)
 	assert.NoError(t, err)
-	assert.Len(t, nodeList, 2, "Expected 2 nodes")
-	pub.Nodes.UpdateNodes(nodeList)
+	assert.Len(t, pub.Nodes.GetAllNodes(), 2, "Expected 2 nodes")
 
 	pubNode := pub.Nodes.GetNodeByID(messengerConfig.Zone, pub.ID(), iotc.PublisherNodeID)
 	assert.NotNil(t, pubNode, "Missing publisher node")
@@ -54,7 +52,7 @@ func TestReadEds(t *testing.T) {
 	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
 	persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
 
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, "")
+	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
 
 	edsAPI := EdsAPI{
 		address: gwAddress,
@@ -69,12 +67,13 @@ func TestReadEds(t *testing.T) {
 func TestPollOnce(t *testing.T) {
 	persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
 	// var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	var testMessenger = messenger.NewMqttMessenger(messengerConfig, nil)
+	var testMessenger = messenger.NewMessenger(messengerConfig, nil)
 	err := persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
 	if !assert.NoError(t, err) {
 		return
 	}
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger, TestConfigFolder)
+	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
+	pub.PersistNodes(TestConfigFolder, false)
 	app := NewOnewireApp(appConfig, pub)
 	app.SetupGatewayNode(pub)
 

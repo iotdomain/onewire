@@ -19,8 +19,8 @@ const GatewayID = "gateway"
 
 // OnewireAppConfig with application state, loaded from onewire.conf
 type OnewireAppConfig struct {
-	PublisherID string `yaml:"publisherid"`    // default is app ID
-	GatewayAddr string `yaml:"gatewayaddress"` // default gateway IP address
+	PublisherID string `yaml:"publisherid"` // default is app ID
+	GatewayAddr string `yaml:"gateway"`     // default gateway IP address
 }
 
 // OnewireApp publisher app
@@ -29,7 +29,7 @@ type OnewireApp struct {
 	pub         *publisher.Publisher
 	log         *logrus.Logger
 	edsAPI      EdsAPI // EDS device access definitions and methods
-	gatewayAddr string // gateway node address
+	gatewayAddr string // address of the gateway connectin go
 }
 
 // SetupGatewayNode creates the gateway node if it doesn't exist
@@ -88,14 +88,15 @@ func Run() {
 	appConfig := &OnewireAppConfig{PublisherID: AppID}
 	persist.LoadAppConfig(configFolder, AppID, appConfig)
 
-	onewirePub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, messenger, configFolder)
-
+	onewirePub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, messenger)
+	onewirePub.PersistNodes(configFolder, true)
 	app := NewOnewireApp(appConfig, onewirePub)
 
-	// Discover the node(s) and outputs. Use default for republishing discovery
-	onewirePub.SetDiscoveryInterval(0, app.SetupGatewayNode)
-	// Update the forecast once an hour
-	onewirePub.SetPollInterval(3600, app.Poll)
+	// // Discover the node(s) and outputs. Use default for republishing discovery
+	// onewirePub.SetDiscoveryInterval(0, app.Discover)
+
+	// Poll gateway and nodes every minute
+	onewirePub.SetPollInterval(60, app.Poll)
 
 	// handle update of node configuraiton
 	onewirePub.SetNodeConfigHandler(app.OnNodeConfigHandler)

@@ -63,7 +63,7 @@ func (edsAPI *EdsAPI) ReadEds() (rootNode *XMLNode, err error) {
 
 	resp, err := http.Get(edsURL)
 	if err != nil {
-		edsAPI.log.Warnf("pollDevice: Unable to read EDS gateway from %s: %v", edsURL, err)
+		edsAPI.log.Errorf("pollDevice: Unable to read EDS gateway from %s: %v", edsURL, err)
 		return nil, err
 	}
 	// Decode the EDS response into XML

@@ -45,7 +45,7 @@ var unitNameMap = map[string]iotc.Unit{
 // This publishes updates to the sensor value except when the sensor is configured as disabled
 // Limitations:
 //   This only identifies sensors with a unit. Writable is not supported.
-func (app *OnewireApp) updateSensor(node *iotc.NodeDiscoveryMessage, sensorNode *XMLNode) {
+func (app *OnewireApp) updateSensor(nodeAddress string, sensorNode *XMLNode) {
 	rawName := sensorNode.XMLName.Local
 
 	// only handle known input types
@@ -54,30 +54,31 @@ func (app *OnewireApp) updateSensor(node *iotc.NodeDiscoveryMessage, sensorNode 
 		return
 	}
 
-	output := app.pub.Outputs.GetOutput(node, sensorType, iotc.DefaultOutputInstance)
+	output := app.pub.Outputs.GetOutput(nodeAddress, sensorType, iotc.DefaultOutputInstance)
 	if output == nil {
 		// convert OneWire EDS data type to IoTConnect output types
 		rawUnit := sensorNode.Units
-		output = nodes.NewOutput(node, sensorType, iotc.DefaultOutputInstance)
+		output = nodes.NewOutput(nodeAddress, sensorType, iotc.DefaultOutputInstance)
 		output.Unit = unitNameMap[rawUnit]
 		app.pub.Outputs.UpdateOutput(output)
 
 		// writable devices also have an input
 		if sensorNode.Writable == "True" {
-			input := nodes.NewInput(node, sensorType, iotc.DefaultInputInstance)
+			input := nodes.NewInput(nodeAddress, sensorType, iotc.DefaultInputInstance)
 			app.pub.Inputs.UpdateInput(input)
 		}
 	}
 
 	newVal := string(sensorNode.Content)
-	app.pub.OutputValues.UpdateOutputValue(node, sensorType, iotc.DefaultOutputInstance, newVal)
+	app.pub.OutputValues.UpdateOutputValue(nodeAddress, sensorType, iotc.DefaultOutputInstance, newVal)
 }
 
 // updateDevice. A new or existing onewire device has been seen.
 // If this is a new device then add.
 // Existing nodes republish their property values.
-func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
-	props, _ := app.edsAPI.ParseNodeParams(deviceNode)
+func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
+	var nodeAddr string
+	props, _ := app.edsAPI.ParseNodeParams(deviceOWNode)
 
 	// EDS Nodes all have a ROMId that uniquely identifies the device on the 1-wire bus
 	id, found := props["ROMId"]
@@ -93,32 +94,34 @@ func (app *OnewireApp) updateDevice(deviceNode *XMLNode) {
 		if deviceType == "" {
 			deviceType = iotc.NodeTypeUnknown // can we determine this?
 		}
-		device = nodes.NewNode(app.pub.Zone, app.config.PublisherID, id, deviceType)
+		nodeAddr = app.pub.Nodes.NewNode(app.pub.Zone, app.config.PublisherID, id, deviceType)
 		// device = app.pub.Nodes.AddNode(id, nodes.NodeType(deviceType))
+	} else {
+		nodeAddr = device.Address
 	}
 
 	// An EDS device xml has an attribute Description that contains the product description
 	// Additional properties can be found in subnodes Name, Family, ROMId, Health, Channel
-	app.pub.Nodes.SetNodeAttr(device.Address, map[iotc.NodeAttr]string{
+	app.pub.Nodes.SetNodeAttr(nodeAddr, map[iotc.NodeAttr]string{
 		iotc.NodeAttrAddress:     id,
-		iotc.NodeAttrDescription: deviceNode.Description,
+		iotc.NodeAttrDescription: deviceOWNode.Description,
 		iotc.NodeAttrModel:       props["Name"],
 		"Health":                 props["Health"],
 		"Channel":                props["Channel"],
 	})
 	//Publish newly discovered sensors and update the values of previously discovered properties
-	for _, propXML := range deviceNode.Nodes {
+	for _, propXML := range deviceOWNode.Nodes {
 		// TODO: create sensors first before publishing values to reduce the nr of device info postings during initial discovery
-		app.updateSensor(device, &propXML)
+		app.updateSensor(nodeAddr, &propXML)
 	}
 }
 
 // Update the one-wire gateway device status
 // gwParams are the parameters as per EDS XML output
 // Returns the gateway device node
-func (app *OnewireApp) updateGateway(gwParams map[string]string) *iotc.NodeDiscoveryMessage {
-	gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayAddr)
-	app.pub.Nodes.SetNodeAttr(app.gatewayAddr, map[iotc.NodeAttr]string{
+func (app *OnewireApp) updateGateway(gwParams map[string]string) {
+
+	app.pub.Nodes.SetNodeAttr(app.gatewayNodeAddr, map[iotc.NodeAttr]string{
 		iotc.NodeAttrMAC:          gwParams["MACAddress"],
 		iotc.NodeAttrHostname:     gwParams["HostName"],
 		iotc.NodeAttrManufacturer: "Embedded Data Systems (EDS)",
@@ -126,7 +129,7 @@ func (app *OnewireApp) updateGateway(gwParams map[string]string) *iotc.NodeDisco
 	})
 
 	// OWServer ENet specific attributes. These could be sensors if there is a need
-	app.pub.Nodes.SetNodeStatus(gwNode, map[iotc.NodeStatus]string{
+	app.pub.Nodes.SetNodeStatus(app.gatewayNodeAddr, map[iotc.NodeStatus]string{
 		"DevicesConnected":         gwParams["DevicesConnected"],
 		"DevicesConnectedChannel1": gwParams["DevicesConnectedChannel1"],
 		"DevicesConnectedChannel2": gwParams["DevicesConnectedChannel2"],
@@ -138,26 +141,27 @@ func (app *OnewireApp) updateGateway(gwParams map[string]string) *iotc.NodeDisco
 		"VoltageChannel2":          gwParams["VoltageChannel2"],
 		"VoltageChannel3":          gwParams["VoltageChannel3"],
 	})
-	return gwNode
+	// return gwNode
 }
 
 // Poll the EDS gateway for updates to nodes and sensors
 func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// read the EDS gateway amd update the gateway state when disconnected
 	nodeList := app.pub.Nodes
-	gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayAddr)
-	if gwNode == nil {
-		app.log.Error("Poll: gateway node not created")
-		return
-	}
+	gwAddr := app.gatewayNodeAddr
+	// gwNode := app.pub.Nodes.GetNodeByAddress(app.gatewayNodeAddr)
+	// if gwNode == nil {
+	// 	app.log.Error("Poll: gateway node not created")
+	// 	return
+	// }
 	edsAPI := app.edsAPI
-	edsAPI.address, _ = nodes.GetNodeConfigValue(gwNode, iotc.NodeAttrAddress)
-	edsAPI.loginName, _ = nodes.GetNodeConfigValue(gwNode, iotc.NodeAttrLoginName)
-	edsAPI.password, _ = nodes.GetNodeConfigValue(gwNode, iotc.NodeAttrPassword)
+	edsAPI.address, _ = nodeList.GetNodeConfigValue(gwAddr, iotc.NodeAttrAddress)
+	edsAPI.loginName, _ = nodeList.GetNodeConfigValue(gwAddr, iotc.NodeAttrLoginName)
+	edsAPI.password, _ = nodeList.GetNodeConfigValue(gwAddr, iotc.NodeAttrPassword)
 	if edsAPI.address == "" {
 		err := errors.New("a Gateway address has not been configured")
 		app.log.Infof(err.Error())
-		nodeList.SetErrorStatus(gwNode, err.Error())
+		nodeList.SetErrorStatus(gwAddr, err.Error())
 		return
 	}
 	startTime := time.Now()
@@ -168,14 +172,14 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	if err != nil {
 		err := fmt.Errorf("unable to connect to the gateway at %s", edsAPI.address)
 		app.log.Infof(err.Error())
-		nodeList.SetErrorStatus(gwNode, err.Error())
+		nodeList.SetErrorStatus(gwAddr, err.Error())
 		return
 	}
 	// (re)discover the nodes on the gateway
 	gwParams, deviceNodes := edsAPI.ParseNodeParams(rootNode)
 	app.updateGateway(gwParams)
-	nodeList.SetNodeRunState(gwNode, iotc.NodeRunStateReady)
-	nodeList.SetNodeStatus(gwNode, map[iotc.NodeStatus]string{
+	nodeList.SetNodeRunState(gwAddr, iotc.NodeRunStateReady)
+	nodeList.SetNodeStatus(gwAddr, map[iotc.NodeStatus]string{
 		iotc.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency*time.Millisecond),
 	})
 
@@ -187,7 +191,7 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 
 	// in case configuration changes
 	node := app.pub.PublisherNode()
-	newPollInterval, err := nodes.GetNodeConfigInt(node, iotc.NodeAttrPollInterval)
+	newPollInterval, err := nodeList.GetNodeConfigInt(node.Address, iotc.NodeAttrPollInterval)
 	if err == nil {
 		app.pub.SetPollInterval(newPollInterval, app.Poll)
 	}

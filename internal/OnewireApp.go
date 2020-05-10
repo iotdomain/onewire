@@ -20,40 +20,43 @@ const GatewayID = "gateway"
 // OnewireAppConfig with application state, loaded from onewire.conf
 type OnewireAppConfig struct {
 	PublisherID string `yaml:"publisherid"` // default is app ID
-	GatewayAddr string `yaml:"gateway"`     // default gateway IP address
+	Gateway     string `yaml:"gateway"`     // default gateway IP address
 }
 
 // OnewireApp publisher app
 type OnewireApp struct {
-	config      *OnewireAppConfig
-	pub         *publisher.Publisher
-	log         *logrus.Logger
-	edsAPI      EdsAPI // EDS device access definitions and methods
-	gatewayAddr string // address of the gateway connectin go
+	config          *OnewireAppConfig
+	pub             *publisher.Publisher
+	log             *logrus.Logger
+	edsAPI          *EdsAPI // EDS device access definitions and methods
+	gatewayNodeAddr string  // address of the gateway node
 }
 
 // SetupGatewayNode creates the gateway node if it doesn't exist
+// This set the default gateway address in its configuration
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	app.log.Info("DiscoverNodes:")
+	nodeList := pub.Nodes
 
-	app.gatewayAddr = nodes.MakeNodeDiscoveryAddress(app.pub.Zone, app.config.PublisherID, GatewayID)
+	gwAddr := nodes.MakeNodeAddress(app.pub.Zone, app.config.PublisherID, GatewayID)
+	app.gatewayNodeAddr = gwAddr
 
-	gatewayNode := pub.Nodes.GetNodeByAddress(app.gatewayAddr)
+	gatewayNode := pub.Nodes.GetNodeByAddress(gwAddr)
 	if gatewayNode == nil {
 		gatewayNode := nodes.NewNode(app.pub.Zone, app.config.PublisherID, GatewayID, iotc.NodeTypeGateway)
-
-		config := nodes.NewConfigAttr(iotc.NodeAttrAddress, iotc.DataTypeString, "EDS Gateway IP address", app.config.GatewayAddr)
-		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
-
-		config = nodes.NewConfigAttr(iotc.NodeAttrLoginName, iotc.DataTypeString, "Login name of the onewire gateway", "")
-		config.Secret = true
-		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
-
-		config = nodes.NewConfigAttr(iotc.NodeAttrPassword, iotc.DataTypeString, "Secret password of the onewire gateway", "")
-		config.Secret = true
-		pub.Nodes.SetNodeConfig(gatewayNode.Address, config)
-		pub.Nodes.UpdateNode(gatewayNode)
+		nodeList.UpdateNode(gatewayNode)
 	}
+	config := nodes.NewNodeConfig(iotc.NodeAttrAddress, iotc.DataTypeString, "EDS Gateway IP address", app.config.Gateway)
+	nodeList.UpdateNodeConfig(gwAddr, config)
+
+	config = nodes.NewNodeConfig(iotc.NodeAttrLoginName, iotc.DataTypeString, "Login name of the onewire gateway", "")
+	config.Secret = true
+	nodeList.UpdateNodeConfig(gwAddr, config)
+
+	config = nodes.NewNodeConfig(iotc.NodeAttrPassword, iotc.DataTypeString, "Secret password of the onewire gateway", "")
+	config.Secret = true
+	nodeList.UpdateNodeConfig(gwAddr, config)
+	// pub.Nodes.UpdateNode(gatewayNode)
 
 	// Onewire OWS Gateway is a node with configuration for address, login name and credentials
 	// Gateway nodes are only discovered when a connection is made
@@ -65,14 +68,19 @@ func (app *OnewireApp) OnNodeConfigHandler(node *iotc.NodeDiscoveryMessage, conf
 	return config
 }
 
-// NewOnewireApp creates the weather app
+// NewOnewireApp creates the app
+// This creates a node for the gateway
 func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireApp {
 	app := OnewireApp{
-		config: config,
-		pub:    pub,
-		log:    pub.Logger,
+		config:          config,
+		pub:             pub,
+		log:             pub.Logger,
+		gatewayNodeAddr: nodes.MakeNodeAddress(pub.Zone, config.PublisherID, GatewayID),
+		edsAPI:          &EdsAPI{},
 	}
 	app.config.PublisherID = AppID
+	app.edsAPI.log = pub.Logger
+	app.SetupGatewayNode(pub)
 	return &app
 }
 
@@ -89,7 +97,7 @@ func Run() {
 	persist.LoadAppConfig(configFolder, AppID, appConfig)
 
 	onewirePub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, messenger)
-	onewirePub.PersistNodes(configFolder, true)
+	onewirePub.SetPersistNodes(configFolder, true)
 	app := NewOnewireApp(appConfig, onewirePub)
 
 	// // Discover the node(s) and outputs. Use default for republishing discovery

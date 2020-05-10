@@ -33,7 +33,7 @@ func TestLoadConfig(t *testing.T) {
 
 	// create publisher and load its node configuration
 	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
-	err = pub.PersistNodes(TestConfigFolder, false)
+	err = pub.SetPersistNodes(TestConfigFolder, false)
 	assert.NoError(t, err)
 	assert.Len(t, pub.Nodes.GetAllNodes(), 2, "Expected 2 nodes")
 
@@ -73,14 +73,15 @@ func TestPollOnce(t *testing.T) {
 		return
 	}
 	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
-	pub.PersistNodes(TestConfigFolder, false)
 	app := NewOnewireApp(appConfig, pub)
+	pub.SetPersistNodes(TestConfigFolder, false)
 	app.SetupGatewayNode(pub)
 
 	assert.NoError(t, err)
 	pub.Start()
-	assert.NoError(t, err)
+
 	app.Poll(pub)
 	time.Sleep(3 * time.Second)
+
 	pub.Stop()
 }

@@ -2,9 +2,7 @@ package internal
 
 import (
 	"github.com/hspaay/iotc.golang/iotc"
-	"github.com/hspaay/iotc.golang/messenger"
 	"github.com/hspaay/iotc.golang/nodes"
-	"github.com/hspaay/iotc.golang/persist"
 	"github.com/hspaay/iotc.golang/publisher"
 	"github.com/sirupsen/logrus"
 )
@@ -86,30 +84,15 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
-	logger := logrus.New()
-	configFolder := persist.DefaultConfigFolder
-	var messengerConfig = messenger.MessengerConfig{}
-
-	persist.LoadMessengerConfig(configFolder, &messengerConfig)
-	messenger := messenger.NewMessenger(&messengerConfig, logger)
-
 	appConfig := &OnewireAppConfig{PublisherID: AppID}
-	persist.LoadAppConfig(configFolder, AppID, appConfig)
+	onewirePub := publisher.NewAppPublisher(AppID, "", appConfig)
 
-	onewirePub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, messenger)
-	onewirePub.SetPersistNodes(configFolder, true)
 	app := NewOnewireApp(appConfig, onewirePub)
+	onewirePub.SetPollInterval(60, app.Poll)
+	onewirePub.SetNodeConfigHandler(app.OnNodeConfigHandler)
 
 	// // Discover the node(s) and outputs. Use default for republishing discovery
 	// onewirePub.SetDiscoveryInterval(0, app.Discover)
-
-	// Poll gateway and nodes every minute
-	onewirePub.SetPollInterval(60, app.Poll)
-
-	// handle update of node configuraiton
-	onewirePub.SetNodeConfigHandler(app.OnNodeConfigHandler)
-	// handle update of node inputs
-	// onewirePub.SetNodeInputHandler(onewireApp.OnNodeInputHandler)
 
 	onewirePub.Start()
 	onewirePub.WaitForSignal()

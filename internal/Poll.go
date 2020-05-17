@@ -12,6 +12,7 @@ import (
 )
 
 // family to device type. See also: http://owfs.sourceforge.net/simple_family.html
+// Todo: get from config file so it is easy to update
 var deviceTypeMap = map[string]iotc.NodeType{
 	"10": iotc.NodeTypeThermometer,
 	"28": iotc.NodeTypeThermometer,
@@ -21,12 +22,12 @@ var deviceTypeMap = map[string]iotc.NodeType{
 // SensorTypeMap attribute name map to sensor types
 var SensorTypeMap = map[string]string{
 	"BarometricPressureMb": iotc.OutputTypeAtmosphericPressure,
-	"Dewpoint":             iotc.OutputTypeDewpoint,
+	"DewPoint":             iotc.OutputTypeDewpoint,
 	"HeatIndex":            iotc.OutputTypeHeatIndex,
 	"Humidity":             iotc.OutputTypeHumidity,
 	"Humidex":              iotc.OutputTypeHumidex,
 	"Light":                iotc.OutputTypeLuminance, // lux
-	"Relay":                iotc.OutputTypeContact,
+	"RelayState":           iotc.OutputTypeRelay,
 	"Temperature":          iotc.OutputTypeTemperature,
 }
 var unitNameMap = map[string]iotc.Unit{
@@ -40,7 +41,7 @@ var unitNameMap = map[string]iotc.Unit{
 	"Volt":                    iotc.UnitVolt,
 }
 
-// updateSensor. A new or existing sensor has been seen
+// updateSensor. A new or existing device sensor has been seen
 // If this is a new sensor, add it to the device and return true. Existing sensors return false.
 // This publishes updates to the sensor value except when the sensor is configured as disabled
 // Limitations:
@@ -108,6 +109,7 @@ func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
 		iotc.NodeAttrModel:       props["Name"],
 		"Health":                 props["Health"],
 		"Channel":                props["Channel"],
+		"Resolution":             props["Resolution"],
 	})
 	//Publish newly discovered sensors and update the values of previously discovered properties
 	for _, propXML := range deviceOWNode.Nodes {

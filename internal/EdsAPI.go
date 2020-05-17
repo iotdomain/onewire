@@ -3,14 +3,16 @@ package internal
 
 import (
 	"encoding/xml"
+	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
 
 // EdsAPI EDS device API properties and methods
 type EdsAPI struct {
-	address   string // EDS IP address
+	address   string // EDS (IP) address or filename (file://./path/to/name.xml)
 	loginName string // Basic Auth login name
 	password  string // Basic Auth password
 	log       *logrus.Logger
@@ -58,18 +60,30 @@ func (edsAPI *EdsAPI) ParseNodeParams(xmlNode *XMLNode) (map[string]string, []XM
 }
 
 // ReadEds reads EDS gateway and return the result as an XML node
+// If edsAPI.address starts with file:// then read from file, otherwise from address
 func (edsAPI *EdsAPI) ReadEds() (rootNode *XMLNode, err error) {
-	edsURL := "http://" + edsAPI.address + "/details.xml"
+	if strings.HasPrefix(edsAPI.address, "file://") {
+		filename := edsAPI.address[7:]
+		buffer, err := ioutil.ReadFile(filename)
+		if err != nil {
+			edsAPI.log.Errorf("ReadEds: Unable to read EDS file from %s: %v", filename, err)
+			return nil, err
+		}
+		err = xml.Unmarshal(buffer, &rootNode)
+	} else {
+		// TODO: support https with login/pw
+		edsURL := "http://" + edsAPI.address + "/details.xml"
 
-	resp, err := http.Get(edsURL)
-	if err != nil {
-		edsAPI.log.Errorf("pollDevice: Unable to read EDS gateway from %s: %v", edsURL, err)
-		return nil, err
+		resp, err := http.Get(edsURL)
+		if err != nil {
+			edsAPI.log.Errorf("ReadEds: Unable to read EDS gateway from %s: %v", edsURL, err)
+			return nil, err
+		}
+		// Decode the EDS response into XML
+		dec := xml.NewDecoder(resp.Body)
+		err = dec.Decode(&rootNode)
+		_ = resp.Body.Close()
 	}
-	// Decode the EDS response into XML
-	dec := xml.NewDecoder(resp.Body)
 	//var rootNode XmlNode
-	_ = dec.Decode(&rootNode)
-	_ = resp.Body.Close()
-	return rootNode, nil
+	return rootNode, err
 }

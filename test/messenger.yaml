@@ -1,5 +1,5 @@
-messenger: "DummyMessenger"
-#messenger: "MQTTMessenger"
+# messenger: "DummyMessenger"
+messenger: "MQTTMessenger"
 
 server: "localhost"
 zone: "test"

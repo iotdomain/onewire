@@ -36,7 +36,7 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	app.log.Info("DiscoverNodes:")
 	nodeList := pub.Nodes
 
-	gwAddr := nodes.MakeNodeAddress(app.pub.Zone, app.config.PublisherID, GatewayID)
+	gwAddr := nodes.MakeNodeDiscoveryAddress(app.pub.Zone, app.config.PublisherID, GatewayID)
 	app.gatewayNodeAddr = gwAddr
 
 	gatewayNode := pub.Nodes.GetNodeByAddress(gwAddr)
@@ -73,7 +73,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 		config:          config,
 		pub:             pub,
 		log:             pub.Logger,
-		gatewayNodeAddr: nodes.MakeNodeAddress(pub.Zone, config.PublisherID, GatewayID),
+		gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.Zone, config.PublisherID, GatewayID),
 		edsAPI:          &EdsAPI{},
 	}
 	app.config.PublisherID = AppID

@@ -180,9 +180,10 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// (re)discover the nodes on the gateway
 	gwParams, deviceNodes := edsAPI.ParseNodeParams(rootNode)
 	app.updateGateway(gwParams)
-	nodeList.SetNodeRunState(gwAddr, iotc.NodeRunStateReady)
 	nodeList.SetNodeStatus(gwAddr, map[iotc.NodeStatus]string{
-		iotc.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency*time.Millisecond),
+		iotc.NodeStatusRunState:    string(iotc.NodeRunStateReady),
+		iotc.NodeStatusLastError:   "",
+		iotc.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
 	})
 
 	// (re)discover any new sensor nodes and publish when changed

@@ -1,0 +1,70 @@
+[
+  {
+    "address": "test/onewire/C100100000267C7E/temperature/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "temperature",
+    "unit": "C"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/humidity/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "humidity",
+    "unit": "%"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/dewpoint/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "dewpoint",
+    "unit": "C"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/heatindex/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "heatindex",
+    "unit": "C"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/atmosphericpressure/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "atmosphericpressure",
+    "unit": "mbar"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/relay/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "relay"
+  },
+  {
+    "address": "test/onewire/2A000003BB170B28/temperature/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "temperature",
+    "unit": "C"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/humidex/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "humidex"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/luminance/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "luminance",
+    "unit": "lux"
+  },
+  {
+    "address": "test/onewire/49000001BCEAD428/temperature/0/$output",
+    "instance": "0",
+    "timestamp": "",
+    "outputtype": "temperature",
+    "unit": "C"
+  }
+]

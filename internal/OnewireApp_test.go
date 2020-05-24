@@ -6,43 +6,41 @@ import (
 
 	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/messenger"
-	"github.com/hspaay/iotc.golang/persist"
 	"github.com/hspaay/iotc.golang/publisher"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 const configFolder = ""
-const gwAddress = "10.3.3.33"
+
+// const gwAddress = "10.3.3.33"
 
 const TestConfigFolder = "../test"
 const Node1Id = GatewayID
 
 var messengerConfig = &messenger.MessengerConfig{Zone: "test"}
-var appConfig = &OnewireAppConfig{PublisherID: AppID}
+var appConfig = &OnewireAppConfig{}
 
 // TestLoadConfig load a node from config
 func TestLoadConfig(t *testing.T) {
-	t.Log("Testing loading config")
-	// create app and load its configs
-	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	err := persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
-	assert.NoError(t, err)
-
-	err = persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
-	assert.NoError(t, err)
+	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	assert.NoError(t, err, "Failed creating AppPublisher")
+	assert.Equal(t, "10.3.3.33", appConfig.GatewayAddress)
+	assert.Equal(t, "onewire", appConfig.PublisherID)
+	pub.Start()
+	// create gateway
+	_ = NewOnewireApp(appConfig, pub)
 
 	// create publisher and load its node configuration
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
-	err = pub.SetPersistNodes(TestConfigFolder, false)
-	assert.NoError(t, err)
-	assert.Len(t, pub.Nodes.GetAllNodes(), 2, "Expected 2 nodes")
+	allNodes := pub.Nodes.GetAllNodes()
+	assert.GreaterOrEqual(t, len(allNodes), 2, "Expected at least 2 nodes")
 
-	pubNode := pub.Nodes.GetNodeByID(messengerConfig.Zone, pub.ID(), iotc.PublisherNodeID)
+	pubNode := pub.GetNodeByID(iotc.PublisherNodeID)
 	assert.NotNil(t, pubNode, "Missing publisher node")
 
-	device := pub.Nodes.GetNodeByID(messengerConfig.Zone, pub.ID(), Node1Id)
+	device := pub.GetNodeByID(Node1Id)
 	assert.NotNil(t, device, "Node 1 not loaded") // 1 device
+	pub.Stop()
 }
 
 // Read EDS test data from file
@@ -55,35 +53,31 @@ func TestReadEdsFromFile(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, rootNode, "Expected root node")
 	assert.True(t, len(rootNode.Nodes) == 20, "Expected 20 parameters and nested")
-
 }
 
 // Read EDS device and check if more than 1 node is returned. A minimum of 1 is expected if the device is online with
 // an additional node for each connected node.
 // This requires a live gateway on the above 'gwAddress'
 func TestReadEdsFromGateway(t *testing.T) {
-	// persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
-	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
-
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
+	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	assert.NoError(t, err, "Failed creating AppPublisher")
+	pub.Start()
 
 	edsAPI := EdsAPI{
-		address: gwAddress,
+		address: appConfig.GatewayAddress,
 		log:     pub.Logger,
 	}
 	rootNode, err := edsAPI.ReadEds()
-	assert.NoError(t, err)
+	assert.NoError(t, err, "Failed reading EDS gateway")
 	assert.NotNil(t, rootNode, "Expected root node")
-	assert.True(t, len(rootNode.Nodes) > 1, "Expected multiple nodes")
+	assert.GreaterOrEqual(t, len(rootNode.Nodes), 3, "Expected at least 3 nodes")
+	pub.Stop()
 }
 
 // Parse the nodes xml file and test for correct results
 func TestParseNodeFile(t *testing.T) {
-	var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
-
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
+	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	pub.Start()
 	app := NewOnewireApp(appConfig, pub)
 
 	edsAPI := EdsAPI{
@@ -102,8 +96,8 @@ func TestParseNodeFile(t *testing.T) {
 	// Parameters should turn into node attributes
 	app.updateGateway(gwParams)
 	gwNode := pub.GetNodeByID(GatewayID)
-	assert.Len(t, gwNode.Attr, 4, "Missing gateway parameters in node")
-	assert.Len(t, gwNode.Status, 10, "Missing gateway status attributes in node")
+	assert.Len(t, gwNode.Attr, 4, "Expected 4 gateway parameters in node")
+	assert.Len(t, gwNode.Status, 10, "Expected 10 gateway node status attributes")
 
 	// (re)discover any new sensor nodes and publish when changed
 	for _, node := range deviceNodes {
@@ -118,19 +112,16 @@ func TestParseNodeFile(t *testing.T) {
 
 	outputList := pub.Outputs.GetAllOutputs()
 	assert.Len(t, outputList, 10, "Missing EDS node outputs")
+	pub.Stop()
+
 }
 
 func TestPollOnce(t *testing.T) {
-	persist.LoadMessengerConfig(TestConfigFolder, messengerConfig)
-	// var testMessenger = messenger.NewDummyMessenger(messengerConfig, nil)
-	var testMessenger = messenger.NewMessenger(messengerConfig, nil)
-	err := persist.LoadAppConfig(TestConfigFolder, AppID, appConfig)
+	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
 	if !assert.NoError(t, err) {
 		return
 	}
-	pub := publisher.NewPublisher(messengerConfig.Zone, appConfig.PublisherID, testMessenger)
 	app := NewOnewireApp(appConfig, pub)
-	pub.SetPersistNodes(TestConfigFolder, false)
 	app.SetupGatewayNode(pub)
 
 	assert.NoError(t, err)

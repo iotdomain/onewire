@@ -70,20 +70,24 @@ func (edsAPI *EdsAPI) ReadEds() (rootNode *XMLNode, err error) {
 			return nil, err
 		}
 		err = xml.Unmarshal(buffer, &rootNode)
-	} else {
-		// TODO: support https with login/pw
-		edsURL := "http://" + edsAPI.address + "/details.xml"
-
-		resp, err := http.Get(edsURL)
-		if err != nil {
-			edsAPI.log.Errorf("ReadEds: Unable to read EDS gateway from %s: %v", edsURL, err)
-			return nil, err
-		}
-		// Decode the EDS response into XML
-		dec := xml.NewDecoder(resp.Body)
-		err = dec.Decode(&rootNode)
-		_ = resp.Body.Close()
+		return rootNode, err
 	}
-	//var rootNode XmlNode
+	// not a file, continue with http request
+	edsURL := "http://" + edsAPI.address + "/details.xml"
+	req, err := http.NewRequest("GET", edsURL, nil)
+	req.SetBasicAuth(edsAPI.loginName, edsAPI.password)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	// resp, err := http.Get(edsURL)
+	if err != nil {
+		edsAPI.log.Errorf("ReadEds: Unable to read EDS gateway from %s: %v", edsURL, err)
+		return nil, err
+	}
+	// Decode the EDS response into XML
+	dec := xml.NewDecoder(resp.Body)
+	err = dec.Decode(&rootNode)
+	_ = resp.Body.Close()
+
 	return rootNode, err
 }

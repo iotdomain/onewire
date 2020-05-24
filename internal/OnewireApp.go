@@ -15,10 +15,11 @@ const GatewayID = "gateway"
 
 // const zoneID = iotc.LocalZoneID
 
-// OnewireAppConfig with application state, loaded from onewire.conf
+// OnewireAppConfig with application state, loaded from onewire.yaml
 type OnewireAppConfig struct {
-	PublisherID string `yaml:"publisherid"` // default is app ID
-	Gateway     string `yaml:"gateway"`     // default gateway IP address
+	PublisherID    string `yaml:"publisherId"`    // default publisher is app ID
+	GatewayAddress string `yaml:"gatewayAddress"` // default gateway IP address
+	GatewayID      string `yaml:"gatewayId"`      // default gateway node ID
 }
 
 // OnewireApp publisher app
@@ -27,27 +28,26 @@ type OnewireApp struct {
 	pub             *publisher.Publisher
 	log             *logrus.Logger
 	edsAPI          *EdsAPI // EDS device access definitions and methods
-	gatewayNodeAddr string  // address of the gateway node
+	gatewayNodeAddr string  // currently running address of the gateway node
 }
 
 // SetupGatewayNode creates the gateway node if it doesn't exist
 // This set the default gateway address in its configuration
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
-	app.log.Info("DiscoverNodes:")
+	app.log.Info("SetupGatewayNode")
 	nodeList := pub.Nodes
+	gwID := GatewayID
 
-	gwAddr := nodes.MakeNodeDiscoveryAddress(app.pub.Zone, app.config.PublisherID, GatewayID)
+	gwAddr := nodes.MakeNodeDiscoveryAddress(app.pub.GetZone(), app.config.PublisherID, GatewayID)
 	app.gatewayNodeAddr = gwAddr
 
-	gatewayNode := pub.Nodes.GetNodeByAddress(gwAddr)
+	gatewayNode := pub.GetNodeByID(gwID)
 	if gatewayNode == nil {
-		gatewayNode := nodes.NewNode(app.pub.Zone, app.config.PublisherID, GatewayID, iotc.NodeTypeGateway)
-		nodeList.UpdateNode(gatewayNode)
+		pub.NewNode(gwID, iotc.NodeTypeGateway)
 	}
-	config := nodes.NewNodeConfig(iotc.NodeAttrAddress, iotc.DataTypeString, "EDS Gateway IP address", app.config.Gateway)
-	nodeList.UpdateNodeConfig(gwAddr, config)
+	pub.NewNodeConfig(gwID, iotc.NodeAttrAddress, iotc.DataTypeString, "EDS Gateway IP address", app.config.GatewayAddress)
 
-	config = nodes.NewNodeConfig(iotc.NodeAttrLoginName, iotc.DataTypeString, "Login name of the onewire gateway", "")
+	config := nodes.NewNodeConfig(iotc.NodeAttrLoginName, iotc.DataTypeString, "Login name of the onewire gateway", "")
 	config.Secret = true
 	nodeList.UpdateNodeConfig(gwAddr, config)
 
@@ -73,7 +73,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 		config:          config,
 		pub:             pub,
 		log:             pub.Logger,
-		gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.Zone, config.PublisherID, GatewayID),
+		gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.GetZone(), config.PublisherID, GatewayID),
 		edsAPI:          &EdsAPI{},
 	}
 	app.config.PublisherID = AppID
@@ -85,7 +85,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
 	appConfig := &OnewireAppConfig{PublisherID: AppID}
-	onewirePub := publisher.NewAppPublisher(AppID, "", appConfig)
+	onewirePub, _ := publisher.NewAppPublisher(AppID, "", appConfig, true)
 
 	app := NewOnewireApp(appConfig, onewirePub)
 	onewirePub.SetPollInterval(60, app.Poll)

@@ -148,13 +148,12 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	gwID := app.config.GatewayID
 
 	edsAPI := app.edsAPI
-	edsAPI.address, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrAddress)
-	edsAPI.address, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrAddress)
-	edsAPI.loginName, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrLoginName)
-	edsAPI.password, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrPassword)
+	edsAPI.address, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrAddress, app.config.GatewayAddress)
+	edsAPI.loginName, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrLoginName, "")
+	edsAPI.password, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrPassword, "")
 	if edsAPI.address == "" {
 		err := errors.New("a Gateway address has not been configured")
-		app.log.Infof(err.Error())
+		app.logger.Infof(err.Error())
 		pub.SetNodeErrorStatus(gwID, iotc.NodeRunStateError, err.Error())
 		return
 	}
@@ -165,7 +164,7 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 
 	if err != nil {
 		err := fmt.Errorf("unable to connect to the gateway at %s", edsAPI.address)
-		app.log.Infof(err.Error())
+		app.logger.Infof(err.Error())
 		pub.SetNodeErrorStatus(gwID, iotc.NodeRunStateError, err.Error())
 		return
 	}

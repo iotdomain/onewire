@@ -26,7 +26,7 @@ type OnewireAppConfig struct {
 type OnewireApp struct {
 	config          *OnewireAppConfig
 	pub             *publisher.Publisher
-	log             *logrus.Logger
+	logger          *logrus.Logger
 	edsAPI          *EdsAPI // EDS device access definitions and methods
 	gatewayNodeAddr string  // currently running address of the gateway node
 }
@@ -34,7 +34,7 @@ type OnewireApp struct {
 // SetupGatewayNode creates the gateway node if it doesn't exist
 // This set the default gateway address in its configuration
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
-	app.log.Info("SetupGatewayNode")
+	app.logger.Info("SetupGatewayNode")
 	nodeList := pub.Nodes
 	gwID := GatewayID
 
@@ -61,24 +61,24 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	// node
 }
 
-// OnNodeConfigHandler handles requests to update node configuration
-func (app *OnewireApp) OnNodeConfigHandler(node *iotc.NodeDiscoveryMessage, config iotc.NodeAttrMap) iotc.NodeAttrMap {
-	return config
-}
-
 // NewOnewireApp creates the app
 // This creates a node for the gateway
 func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireApp {
 	app := OnewireApp{
 		config:          config,
 		pub:             pub,
-		log:             pub.Logger,
+		logger:          pub.Logger,
 		gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.GetZone(), config.PublisherID, GatewayID),
 		edsAPI:          &EdsAPI{},
 	}
 	app.config.PublisherID = AppID
 	app.edsAPI.log = pub.Logger
-	app.SetupGatewayNode(pub)
+	pub.SetPollInterval(60, app.Poll)
+	// pub.SetNodeInputHandler(app.HandleInputCommand)
+	pub.SetNodeConfigHandler(app.HandleConfigCommand)
+	// // Discover the node(s) and outputs. Use default for republishing discovery
+	// onewirePub.SetDiscoveryInterval(0, app.Discover)
+
 	return &app
 }
 
@@ -88,11 +88,7 @@ func Run() {
 	onewirePub, _ := publisher.NewAppPublisher(AppID, "", appConfig, true)
 
 	app := NewOnewireApp(appConfig, onewirePub)
-	onewirePub.SetPollInterval(60, app.Poll)
-	onewirePub.SetNodeConfigHandler(app.OnNodeConfigHandler)
-
-	// // Discover the node(s) and outputs. Use default for republishing discovery
-	// onewirePub.SetDiscoveryInterval(0, app.Discover)
+	app.SetupGatewayNode(onewirePub)
 
 	onewirePub.Start()
 	onewirePub.WaitForSignal()

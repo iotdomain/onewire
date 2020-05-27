@@ -1,4 +1,7 @@
-publisherId: "onewire"
+# Publisher configuration options
+# Optional parameters are commented out and shown with their default value
+
+#publisherId: "onewire"
+#gatewayId: "gateway"
 
 gatewayAddress: 10.3.3.33
-gatewayId: "gateway"

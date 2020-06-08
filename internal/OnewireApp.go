@@ -10,8 +10,8 @@ import (
 // AppID application name used for configuration file and default publisherID
 const AppID = "onewire"
 
-// GatewayID with nodeId of the EDS gateway
-const GatewayID = "gateway"
+// DefaultGatewayID with nodeId of the EDS gateway. Can be overridden in config.
+const DefaultGatewayID = "gateway"
 
 // const zoneID = iotc.LocalZoneID
 
@@ -36,9 +36,9 @@ type OnewireApp struct {
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	app.logger.Info("SetupGatewayNode")
 	nodeList := pub.Nodes
-	gwID := GatewayID
+	gwID := DefaultGatewayID
 
-	gwAddr := nodes.MakeNodeDiscoveryAddress(app.pub.GetZone(), app.config.PublisherID, GatewayID)
+	gwAddr := pub.MakeNodeDiscoveryAddress(DefaultGatewayID)
 	app.gatewayNodeAddr = gwAddr
 
 	gatewayNode := pub.GetNodeByID(gwID)
@@ -65,14 +65,19 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 // This creates a node for the gateway
 func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireApp {
 	app := OnewireApp{
-		config:          config,
-		pub:             pub,
-		logger:          pub.Logger,
-		gatewayNodeAddr: nodes.MakeNodeDiscoveryAddress(pub.GetZone(), config.PublisherID, GatewayID),
-		edsAPI:          &EdsAPI{},
+		config: config,
+		pub:    pub,
+		logger: logrus.New(),
+		edsAPI: &EdsAPI{},
 	}
-	app.config.PublisherID = AppID
-	app.edsAPI.log = pub.Logger
+	if app.config.PublisherID == "" {
+		app.config.PublisherID = AppID
+	}
+	if app.config.GatewayID == "" {
+		app.config.GatewayID = DefaultGatewayID
+	}
+	app.edsAPI.log = app.logger
+	pub.NewNode(DefaultGatewayID, iotc.NodeTypeGateway)
 	pub.SetPollInterval(60, app.Poll)
 	// pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)

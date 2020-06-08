@@ -144,7 +144,6 @@ func (app *OnewireApp) updateGateway(gwParams map[string]string) {
 // Poll the EDS gateway for updates to nodes and sensors
 func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// read the EDS gateway amd update the gateway state when disconnected
-	nodeList := app.pub.Nodes
 	gwID := app.config.GatewayID
 
 	edsAPI := app.edsAPI
@@ -182,13 +181,5 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	// (re)discover any new sensor nodes and publish when changed
 	for _, node := range deviceNodes {
 		app.updateDevice(&node)
-	}
-	// in case configuration changes
-
-	// in case configuration changes
-	node := app.pub.PublisherNode()
-	newPollInterval, err := nodeList.GetNodeConfigInt(node.Address, iotc.NodeAttrPollInterval)
-	if err == nil {
-		app.pub.SetPollInterval(newPollInterval, app.Poll)
 	}
 }

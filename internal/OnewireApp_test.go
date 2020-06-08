@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hspaay/iotc.golang/iotc"
 	"github.com/hspaay/iotc.golang/messenger"
 	"github.com/hspaay/iotc.golang/publisher"
 	"github.com/sirupsen/logrus"
@@ -16,9 +15,9 @@ const configFolder = ""
 // const gwAddress = "10.3.3.33"
 
 const TestConfigFolder = "../test"
-const Node1Id = GatewayID
+const Node1Id = DefaultGatewayID
 
-var messengerConfig = &messenger.MessengerConfig{Zone: "test"}
+var messengerConfig = &messenger.MessengerConfig{Domain: "test"}
 var appConfig = &OnewireAppConfig{}
 
 // TestLoadConfig load a node from config
@@ -26,17 +25,14 @@ func TestLoadConfig(t *testing.T) {
 	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	assert.Equal(t, "10.3.3.33", appConfig.GatewayAddress)
-	assert.Equal(t, "onewire", appConfig.PublisherID)
+	assert.Equal(t, "onewire", pub.PublisherID())
 	pub.Start()
 	// create gateway
 	_ = NewOnewireApp(appConfig, pub)
 
 	// create publisher and load its node configuration
 	allNodes := pub.Nodes.GetAllNodes()
-	assert.GreaterOrEqual(t, len(allNodes), 2, "Expected at least 2 nodes")
-
-	pubNode := pub.GetNodeByID(iotc.PublisherNodeID)
-	assert.NotNil(t, pubNode, "Missing publisher node")
+	assert.GreaterOrEqual(t, len(allNodes), 1, "Expected at least 1 node")
 
 	device := pub.GetNodeByID(Node1Id)
 	assert.NotNil(t, device, "Node 1 not loaded") // 1 device
@@ -65,7 +61,7 @@ func TestReadEdsFromGateway(t *testing.T) {
 
 	edsAPI := EdsAPI{
 		address: appConfig.GatewayAddress,
-		log:     pub.Logger,
+		log:     logrus.New(),
 	}
 	rootNode, err := edsAPI.ReadEds()
 	assert.NoError(t, err, "Failed reading EDS gateway")
@@ -82,7 +78,7 @@ func TestParseNodeFile(t *testing.T) {
 
 	edsAPI := EdsAPI{
 		address: "file://../test/owserver-details.xml",
-		log:     pub.Logger,
+		log:     logrus.New(),
 	}
 	rootNode, err := edsAPI.ReadEds()
 	if !assert.NoError(t, err) {
@@ -95,16 +91,16 @@ func TestParseNodeFile(t *testing.T) {
 
 	// Parameters should turn into node attributes
 	app.updateGateway(gwParams)
-	gwNode := pub.GetNodeByID(GatewayID)
-	assert.Len(t, gwNode.Attr, 4, "Expected 4 gateway parameters in node")
-	assert.Len(t, gwNode.Status, 10, "Expected 10 gateway node status attributes")
+	gwNode := pub.GetNodeByID(DefaultGatewayID)
+	assert.Len(t, gwNode.Attr, 4, "Expected 4 attributes in gateway node")
+	assert.Len(t, gwNode.Status, 10, "Expected 10 status attributes in gateway node")
 
 	// (re)discover any new sensor nodes and publish when changed
 	for _, node := range deviceNodes {
 		app.updateDevice(&node)
 	}
 	nodeList := pub.Nodes.GetAllNodes()
-	assert.Len(t, nodeList, 5, "Missing nodes, expect publisher, gateway and 3 device nodes")
+	assert.Len(t, nodeList, 4, "Missing nodes, expect gateway and 3 device nodes")
 
 	// There is one relay which is an input
 	inputList := pub.Inputs.GetAllInputs()

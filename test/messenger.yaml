@@ -4,3 +4,5 @@ messenger: "MQTTMessenger"
 server: "localhost"
 domain: "test"
 
+# message signing to use
+signing: "none" # "jws"

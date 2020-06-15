@@ -10,11 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const configFolder = ""
-
 // const gwAddress = "10.3.3.33"
 
-const TestConfigFolder = "../test"
+const cacheFolder = "../test/cache"
+const configFolder = "../test"
 const Node1Id = DefaultGatewayID
 
 var messengerConfig = &messenger.MessengerConfig{Domain: "test"}
@@ -22,7 +21,7 @@ var appConfig = &OnewireAppConfig{}
 
 // TestLoadConfig load a node from config
 func TestLoadConfig(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, true)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	assert.Equal(t, "10.3.3.33", appConfig.GatewayAddress)
 	assert.Equal(t, "onewire", pub.PublisherID())
@@ -55,7 +54,7 @@ func TestReadEdsFromFile(t *testing.T) {
 // an additional node for each connected node.
 // This requires a live gateway on the above 'gwAddress'
 func TestReadEdsFromGateway(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, true)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	pub.Start()
 
@@ -72,7 +71,7 @@ func TestReadEdsFromGateway(t *testing.T) {
 
 // Parse the nodes xml file and test for correct results
 func TestParseNodeFile(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, false)
 	pub.Start()
 	app := NewOnewireApp(appConfig, pub)
 
@@ -113,7 +112,7 @@ func TestParseNodeFile(t *testing.T) {
 }
 
 func TestPollOnce(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, TestConfigFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, false)
 	if !assert.NoError(t, err) {
 		return
 	}

@@ -1,0 +1,22 @@
+[
+  {
+    "address": "test/onewire/gateway/$node",
+    "config": {
+      "alias": {
+        "name": "",
+        "datatype": "string",
+        "description": "Alias node ID for inputs and outputs",
+        "id": "alias"
+      },
+      "name": {
+        "name": "",
+        "datatype": "string",
+        "description": "Human friendly node name",
+        "id": "name"
+      }
+    },
+    "nodeId": "gateway",
+    "publisher": "",
+    "type": "gateway"
+  }
+]

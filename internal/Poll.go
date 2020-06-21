@@ -19,7 +19,7 @@ var deviceTypeMap = map[string]iotc.NodeType{
 }
 
 // SensorTypeMap attribute name map to sensor types
-var SensorTypeMap = map[string]string{
+var SensorTypeMap = map[string]iotc.OutputType{
 	"BarometricPressureMb": iotc.OutputTypeAtmosphericPressure,
 	"DewPoint":             iotc.OutputTypeDewpoint,
 	"HeatIndex":            iotc.OutputTypeHeatIndex,
@@ -64,7 +64,7 @@ func (app *OnewireApp) updateSensor(nodeID string, sensorNode *XMLNode) {
 
 		// writable devices also have an input
 		if sensorNode.Writable == "True" {
-			app.pub.NewInput(nodeID, sensorType, iotc.DefaultInputInstance)
+			app.pub.NewInput(nodeID, iotc.InputType(sensorType), iotc.DefaultInputInstance)
 		}
 	}
 
@@ -147,9 +147,9 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	gwID := app.config.GatewayID
 
 	edsAPI := app.edsAPI
-	edsAPI.address, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrAddress, app.config.GatewayAddress)
-	edsAPI.loginName, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrLoginName, "")
-	edsAPI.password, _ = pub.GetNodeConfigValue(gwID, iotc.NodeAttrPassword, "")
+	edsAPI.address, _ = pub.GetNodeConfigString(gwID, iotc.NodeAttrAddress, app.config.GatewayAddress)
+	edsAPI.loginName, _ = pub.GetNodeConfigString(gwID, iotc.NodeAttrLoginName, "")
+	edsAPI.password, _ = pub.GetNodeConfigString(gwID, iotc.NodeAttrPassword, "")
 	if edsAPI.address == "" {
 		err := errors.New("a Gateway address has not been configured")
 		app.logger.Infof(err.Error())

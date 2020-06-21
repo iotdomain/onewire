@@ -2,7 +2,6 @@ package internal
 
 import (
 	"github.com/hspaay/iotc.golang/iotc"
-	"github.com/hspaay/iotc.golang/nodes"
 	"github.com/hspaay/iotc.golang/publisher"
 	"github.com/sirupsen/logrus"
 )
@@ -12,8 +11,6 @@ const AppID = "onewire"
 
 // DefaultGatewayID with nodeId of the EDS gateway. Can be overridden in config.
 const DefaultGatewayID = "gateway"
-
-// const zoneID = iotc.LocalZoneID
 
 // OnewireAppConfig with application state, loaded from onewire.yaml
 type OnewireAppConfig struct {
@@ -35,7 +32,6 @@ type OnewireApp struct {
 // This set the default gateway address in its configuration
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	app.logger.Info("SetupGatewayNode")
-	nodeList := pub.Nodes
 	gwID := DefaultGatewayID
 
 	gwAddr := pub.MakeNodeDiscoveryAddress(DefaultGatewayID)
@@ -45,16 +41,21 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	if gatewayNode == nil {
 		pub.NewNode(gwID, iotc.NodeTypeGateway)
 	}
-	pub.NewNodeConfig(gwID, iotc.NodeAttrAddress, iotc.DataTypeString, "EDS Gateway IP address", app.config.GatewayAddress)
-
-	config := nodes.NewNodeConfig(iotc.NodeAttrLoginName, iotc.DataTypeString, "Login name of the onewire gateway", "")
-	config.Secret = true
-	nodeList.UpdateNodeConfig(gwAddr, config)
-
-	config = nodes.NewNodeConfig(iotc.NodeAttrPassword, iotc.DataTypeString, "Secret password of the onewire gateway", "")
-	config.Secret = true
-	nodeList.UpdateNodeConfig(gwAddr, config)
-	// pub.Nodes.UpdateNode(gatewayNode)
+	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrAddress, &iotc.ConfigAttr{
+		Datatype:    iotc.DataTypeString,
+		Description: "EDS Gateway IP address",
+		Default:     app.config.GatewayAddress,
+	})
+	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrLoginName, &iotc.ConfigAttr{
+		Datatype:    iotc.DataTypeString,
+		Description: "Login name of the onewire gateway",
+		Secret:      true, // don't include value in discovery publication
+	})
+	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrPassword, &iotc.ConfigAttr{
+		Datatype:    iotc.DataTypeString,
+		Description: "Password of the onewire gateway",
+		Secret:      true, // don't include value in discovery publication
+	})
 
 	// Onewire OWS Gateway is a node with configuration for address, login name and credentials
 	// Gateway nodes are only discovered when a connection is made

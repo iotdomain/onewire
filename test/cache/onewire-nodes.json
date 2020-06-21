@@ -3,16 +3,12 @@
     "address": "test/onewire/gateway/$node",
     "config": {
       "alias": {
-        "name": "",
         "datatype": "string",
-        "description": "Alias node ID for inputs and outputs",
-        "id": "alias"
+        "description": "Alias node ID for inputs and outputs"
       },
       "name": {
-        "name": "",
         "datatype": "string",
-        "description": "Human friendly node name",
-        "id": "name"
+        "description": "Human friendly node name"
       }
     },
     "nodeId": "gateway",

@@ -42,17 +42,17 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 		pub.NewNode(gwID, iotc.NodeTypeGateway)
 	}
 	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrAddress, &iotc.ConfigAttr{
-		Datatype:    iotc.DataTypeString,
+		DataType:    iotc.DataTypeString,
 		Description: "EDS Gateway IP address",
 		Default:     app.config.GatewayAddress,
 	})
 	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrLoginName, &iotc.ConfigAttr{
-		Datatype:    iotc.DataTypeString,
+		DataType:    iotc.DataTypeString,
 		Description: "Login name of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
 	})
 	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrPassword, &iotc.ConfigAttr{
-		Datatype:    iotc.DataTypeString,
+		DataType:    iotc.DataTypeString,
 		Description: "Password of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
 	})

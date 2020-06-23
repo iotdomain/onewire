@@ -1,6 +1,6 @@
 package main
 
-import "iotd.onewire/internal"
+import "onewire/internal"
 
 func main() {
 	internal.Run()

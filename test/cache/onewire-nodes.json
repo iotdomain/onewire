@@ -12,7 +12,7 @@
       }
     },
     "nodeId": "gateway",
-    "publisher": "",
+    "publisherId": "",
     "type": "gateway"
   }
 ]

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hspaay/iotc.golang/messenger"
-	"github.com/hspaay/iotc.golang/publisher"
+	"github.com/iotdomain/iotdomain-go/messenger"
+	"github.com/iotdomain/iotdomain-go/publisher"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

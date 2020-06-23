@@ -1,14 +1,14 @@
-# IoTConnect Onewire Publisher
+# Onewire Publisher
 
 This publisher reads sensor information from the onewire EDS OWServer V2 gateway and publishes it on the message bus 
-following the IoTConnect standard.
+following the IoTDomain standard.
 
 
-To build and/or install see the [Iotc.golang README](https://github.com/hspaay/iotc.golang)
+To build and/or install see the [iotdomain-go README](https://github.com/iotdomain/iotdomain-go)
 
 ## Dependencies
 
-This publisher does not have any further dependencies, other than listed in the iotc.golang README.md
+This publisher does not have any further dependencies, other than listed in the iotdomain-go README.md
 
 
 ## Configuration

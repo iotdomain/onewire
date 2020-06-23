@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"github.com/hspaay/iotc.golang/iotc"
-	"github.com/hspaay/iotc.golang/publisher"
+	"github.com/iotdomain/iotdomain-go/publisher"
+	"github.com/iotdomain/iotdomain-go/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,20 +39,20 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 
 	gatewayNode := pub.GetNodeByID(gwID)
 	if gatewayNode == nil {
-		pub.NewNode(gwID, iotc.NodeTypeGateway)
+		pub.NewNode(gwID, types.NodeTypeGateway)
 	}
-	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrAddress, &iotc.ConfigAttr{
-		DataType:    iotc.DataTypeString,
+	pub.Nodes.UpdateNodeConfig(gwAddr, types.NodeAttrAddress, &types.ConfigAttr{
+		DataType:    types.DataTypeString,
 		Description: "EDS Gateway IP address",
 		Default:     app.config.GatewayAddress,
 	})
-	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrLoginName, &iotc.ConfigAttr{
-		DataType:    iotc.DataTypeString,
+	pub.Nodes.UpdateNodeConfig(gwAddr, types.NodeAttrLoginName, &types.ConfigAttr{
+		DataType:    types.DataTypeString,
 		Description: "Login name of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
 	})
-	pub.Nodes.UpdateNodeConfig(gwAddr, iotc.NodeAttrPassword, &iotc.ConfigAttr{
-		DataType:    iotc.DataTypeString,
+	pub.Nodes.UpdateNodeConfig(gwAddr, types.NodeAttrPassword, &types.ConfigAttr{
+		DataType:    types.DataTypeString,
 		Description: "Password of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
 	})
@@ -78,7 +78,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 		app.config.GatewayID = DefaultGatewayID
 	}
 	app.edsAPI.log = app.logger
-	pub.NewNode(DefaultGatewayID, iotc.NodeTypeGateway)
+	pub.NewNode(DefaultGatewayID, types.NodeTypeGateway)
 	pub.SetPollInterval(60, app.Poll)
 	// pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)

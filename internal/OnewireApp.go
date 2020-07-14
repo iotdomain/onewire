@@ -23,7 +23,6 @@ type OnewireAppConfig struct {
 type OnewireApp struct {
 	config          *OnewireAppConfig
 	pub             *publisher.Publisher
-	logger          *logrus.Logger
 	edsAPI          *EdsAPI // EDS device access definitions and methods
 	gatewayNodeAddr string  // currently running address of the gateway node
 }
@@ -31,27 +30,27 @@ type OnewireApp struct {
 // SetupGatewayNode creates the gateway node if it doesn't exist
 // This set the default gateway address in its configuration
 func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
-	app.logger.Info("SetupGatewayNode")
+	logrus.Info("SetupGatewayNode")
 	gwID := DefaultGatewayID
 
-	gwAddr := pub.MakeNodeDiscoveryAddress(DefaultGatewayID)
+	gwAddr := pub.MakeNodeDiscoveryAddress(gwID)
 	app.gatewayNodeAddr = gwAddr
 
 	gatewayNode := pub.GetNodeByID(gwID)
 	if gatewayNode == nil {
 		pub.NewNode(gwID, types.NodeTypeGateway)
 	}
-	pub.Nodes.UpdateNodeConfig(gwAddr, types.NodeAttrAddress, &types.ConfigAttr{
+	pub.UpdateNodeConfig(gwID, types.NodeAttrAddress, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
 		Description: "EDS Gateway IP address",
 		Default:     app.config.GatewayAddress,
 	})
-	pub.Nodes.UpdateNodeConfig(gwAddr, types.NodeAttrLoginName, &types.ConfigAttr{
+	pub.UpdateNodeConfig(gwID, types.NodeAttrLoginName, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
 		Description: "Login name of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
 	})
-	pub.Nodes.UpdateNodeConfig(gwAddr, types.NodeAttrPassword, &types.ConfigAttr{
+	pub.UpdateNodeConfig(gwID, types.NodeAttrPassword, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
 		Description: "Password of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
@@ -68,7 +67,6 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 	app := OnewireApp{
 		config: config,
 		pub:    pub,
-		logger: logrus.New(),
 		edsAPI: &EdsAPI{},
 	}
 	if app.config.PublisherID == "" {
@@ -77,7 +75,6 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 	if app.config.GatewayID == "" {
 		app.config.GatewayID = DefaultGatewayID
 	}
-	app.edsAPI.log = app.logger
 	pub.NewNode(DefaultGatewayID, types.NodeTypeGateway)
 	pub.SetPollInterval(60, app.Poll)
 	// pub.SetNodeInputHandler(app.HandleInputCommand)

@@ -15,7 +15,6 @@ type EdsAPI struct {
 	address   string // EDS (IP) address or filename (file://./path/to/name.xml)
 	loginName string // Basic Auth login name
 	password  string // Basic Auth password
-	log       *logrus.Logger
 }
 
 // XMLNode XML parsing node. Pure magic...
@@ -66,7 +65,7 @@ func (edsAPI *EdsAPI) ReadEds() (rootNode *XMLNode, err error) {
 		filename := edsAPI.address[7:]
 		buffer, err := ioutil.ReadFile(filename)
 		if err != nil {
-			edsAPI.log.Errorf("ReadEds: Unable to read EDS file from %s: %v", filename, err)
+			logrus.Errorf("ReadEds: Unable to read EDS file from %s: %v", filename, err)
 			return nil, err
 		}
 		err = xml.Unmarshal(buffer, &rootNode)
@@ -81,7 +80,7 @@ func (edsAPI *EdsAPI) ReadEds() (rootNode *XMLNode, err error) {
 
 	// resp, err := http.Get(edsURL)
 	if err != nil {
-		edsAPI.log.Errorf("ReadEds: Unable to read EDS gateway from %s: %v", edsURL, err)
+		logrus.Errorf("ReadEds: Unable to read EDS gateway from %s: %v", edsURL, err)
 		return nil, err
 	}
 	// Decode the EDS response into XML

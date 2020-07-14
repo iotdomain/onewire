@@ -1,17 +1,14 @@
 {
   "address": "test/onewire/$identity",
-  "public": {
-   "domain": "test",
-   "issuerName": "onewire",
-   "location": "local",
-   "organization": "",
-   "publicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7fsPMqzDfVPeEKqMr6OJYXuf5SoG\nAMZsG1G24l0vrqvew3wD3pwQtQRA0nXpSZ+vieiDBaGzHFTMF6Bmm0tMUw==\n-----END PUBLIC KEY-----\n",
-   "publisherId": "onewire",
-   "timestamp": "2020-06-17T22:57:19.813-0700",
-   "validUntil": "2021-06-17T22:57:19.813-0700"
-  },
-  "signature": "jLjqVSOR7tDgLYYMHDBZKZ5QnR2RXdkce4m7rpj6kq46iHU0RwGiHCRowtrbC2QER1pyqlztaz7GXK_qVdldTg==",
-  "signer": "onewire",
-  "timestamp": "2020-06-17T22:57:19.813-0700",
-  "privateKey": "-----BEGIN PRIVATE KEY-----\nMHcCAQEEILCv6ngPOXt4RH/HY+57PT3SW1tvZEvfVZugasWp6mMboAoGCCqGSM49\nAwEHoUQDQgAE7fsPMqzDfVPeEKqMr6OJYXuf5SoGAMZsG1G24l0vrqvew3wD3pwQ\ntQRA0nXpSZ+vieiDBaGzHFTMF6Bmm0tMUw==\n-----END PRIVATE KEY-----\n"
+  "domain": "test",
+  "issuerName": "onewire",
+  "location": "local",
+  "organization": "",
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEazukp2Ezy45qsDPZj7P1GoZIpwlv\nmKXhjuS3bwGpgVs6dVC7JVJ/H34dXNn74Zw3UPNH1LBiSeFdfqaWqpPDWQ==\n-----END PUBLIC KEY-----\n",
+  "publisherId": "onewire",
+  "validUntil": "2021-07-12T23:07:07.725-0700",
+  "signature": "4bTq2-FAoGWZ-R1iVhZ3wFkNzxEJ7ZJPBw5G_qTl3t0kTM2zWowY9imyUKmPeBOfflTkzaW0sDwPx6G810WFlA==",
+  "timestamp": "2020-07-12T23:07:07.725-0700",
+  "privateKey": "-----BEGIN PRIVATE KEY-----\nMHcCAQEEIEcXvMcBJuzoCeeUohwh+5X9LV4sVAjrClekCv/1/98yoAoGCCqGSM49\nAwEHoUQDQgAEazukp2Ezy45qsDPZj7P1GoZIpwlvmKXhjuS3bwGpgVs6dVC7JVJ/\nH34dXNn74Zw3UPNH1LBiSeFdfqaWqpPDWQ==\n-----END PRIVATE KEY-----\n",
+  "sender": ""
  }

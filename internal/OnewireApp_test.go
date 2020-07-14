@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/iotdomain/iotdomain-go/messenger"
+	"github.com/iotdomain/iotdomain-go/messaging"
 	"github.com/iotdomain/iotdomain-go/publisher"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,7 +15,7 @@ const cacheFolder = "../test/cache"
 const configFolder = "../test"
 const Node1Id = DefaultGatewayID
 
-var messengerConfig = &messenger.MessengerConfig{Domain: "test"}
+var messengerConfig = &messaging.MessengerConfig{Domain: "test"}
 var appConfig = &OnewireAppConfig{}
 
 // TestLoadConfig load a node from config
@@ -30,7 +29,7 @@ func TestLoadConfig(t *testing.T) {
 	_ = NewOnewireApp(appConfig, pub)
 
 	// create publisher and load its node configuration
-	allNodes := pub.Nodes.GetAllNodes()
+	allNodes := pub.GetNodes()
 	assert.GreaterOrEqual(t, len(allNodes), 1, "Expected at least 1 node")
 
 	device := pub.GetNodeByID(Node1Id)
@@ -42,7 +41,6 @@ func TestLoadConfig(t *testing.T) {
 func TestReadEdsFromFile(t *testing.T) {
 	edsAPI := EdsAPI{
 		address: "file://../test/owserver-details.xml",
-		log:     logrus.New(),
 	}
 	rootNode, err := edsAPI.ReadEds()
 	assert.NoError(t, err)
@@ -60,7 +58,6 @@ func TestReadEdsFromGateway(t *testing.T) {
 
 	edsAPI := EdsAPI{
 		address: appConfig.GatewayAddress,
-		log:     logrus.New(),
 	}
 	rootNode, err := edsAPI.ReadEds()
 	assert.NoError(t, err, "Failed reading EDS gateway")
@@ -77,7 +74,6 @@ func TestParseNodeFile(t *testing.T) {
 
 	edsAPI := EdsAPI{
 		address: "file://../test/owserver-details.xml",
-		log:     logrus.New(),
 	}
 	rootNode, err := edsAPI.ReadEds()
 	if !assert.NoError(t, err) {
@@ -98,14 +94,14 @@ func TestParseNodeFile(t *testing.T) {
 	for _, node := range deviceNodes {
 		app.updateDevice(&node)
 	}
-	nodeList := pub.Nodes.GetAllNodes()
+	nodeList := pub.GetNodes()
 	assert.Len(t, nodeList, 4, "Missing nodes, expect gateway and 3 device nodes")
 
 	// There is one relay which is an input
-	inputList := pub.Inputs.GetAllInputs()
+	inputList := pub.GetInputs()
 	assert.Len(t, inputList, 1, "Unexpected EDS node inputs")
 
-	outputList := pub.Outputs.GetAllOutputs()
+	outputList := pub.GetOutputs()
 	assert.Len(t, outputList, 10, "Missing EDS node outputs")
 	pub.Stop()
 

@@ -1,7 +1,15 @@
 # Publisher configuration options
 # Optional parameters are commented out and shown with their default value
 
+# AppConfig fields
+loglevel: "info"
+logfile: "../test/onewire.log"
 #publisherId: "onewire"
+
+# Onewire config
 #gatewayId: "gateway"
 
 gatewayAddress: 10.3.3.33
+
+
+  

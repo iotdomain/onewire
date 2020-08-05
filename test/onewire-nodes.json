@@ -1,0 +1,192 @@
+[
+  {
+    "address": "test/onewire/gateway/$node",
+    "attr": {
+      "hostname": "EDSOWSERVER2",
+      "mac": "00:04:A3:B1:F2:F0",
+      "manufacturer": "Embedded Data Systems (EDS)",
+      "model": "OWServer_v2-Enet"
+    },
+    "config": {
+      "address": {
+        "datatype": "string",
+        "default": "10.3.3.33",
+        "description": "EDS Gateway IP address"
+      },
+      "loginName": {
+        "datatype": "string",
+        "description": "Login name of the onewire gateway",
+        "secret": true
+      },
+      "name": {
+        "datatype": "string",
+        "description": "Human friendly node name"
+      },
+      "password": {
+        "datatype": "string",
+        "description": "Password of the onewire gateway",
+        "secret": true
+      },
+      "publishEvent": {
+        "datatype": "string",
+        "default": "false",
+        "description": "Enable publishing outputs as event"
+      },
+      "publishHistory": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing output history"
+      },
+      "publishLatest": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing latest output"
+      },
+      "publishRaw": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing raw outputs"
+      }
+    },
+    "deviceid": "gateway",
+    "nodeid": "gateway",
+    "nodeType": "gateway",
+    "status": {
+      "DataErrorsChannel1": "0",
+      "DataErrorsChannel2": "20",
+      "DataErrorsChannel3": "0",
+      "DevicesConnected": "3",
+      "DevicesConnectedChannel1": "0",
+      "DevicesConnectedChannel2": "2",
+      "DevicesConnectedChannel3": "1",
+      "VoltageChannel1": "4.74",
+      "VoltageChannel2": "4.73",
+      "VoltageChannel3": "4.74",
+      "latencymsec": "226",
+      "runState": "ready"
+    },
+    "timestamp": "2020-08-05T12:22:24.987-0700"
+  },
+  {
+    "address": "test/onewire/2A000003BB170B28/$node",
+    "attr": {
+      "Channel": "2",
+      "Health": "7",
+      "Resolution": "12",
+      "address": "2A000003BB170B28",
+      "description": "Programmable resolution thermometer",
+      "model": "DS18B20"
+    },
+    "config": {
+      "name": {
+        "datatype": "string",
+        "description": "Human friendly node name"
+      },
+      "publishEvent": {
+        "datatype": "string",
+        "default": "false",
+        "description": "Enable publishing outputs as event"
+      },
+      "publishHistory": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing output history"
+      },
+      "publishLatest": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing latest output"
+      },
+      "publishRaw": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing raw outputs"
+      }
+    },
+    "deviceid": "2A000003BB170B28",
+    "nodeid": "2A000003BB170B28",
+    "nodeType": "thermometer",
+    "timestamp": "2020-08-05T12:22:23.756-0700"
+  },
+  {
+    "address": "test/onewire/49000001BCEAD428/$node",
+    "attr": {
+      "Channel": "3",
+      "Health": "7",
+      "Resolution": "12",
+      "address": "49000001BCEAD428",
+      "description": "Programmable resolution thermometer",
+      "model": "DS18B20"
+    },
+    "config": {
+      "name": {
+        "datatype": "string",
+        "description": "Human friendly node name"
+      },
+      "publishEvent": {
+        "datatype": "string",
+        "default": "false",
+        "description": "Enable publishing outputs as event"
+      },
+      "publishHistory": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing output history"
+      },
+      "publishLatest": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing latest output"
+      },
+      "publishRaw": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing raw outputs"
+      }
+    },
+    "deviceid": "49000001BCEAD428",
+    "nodeid": "49000001BCEAD428",
+    "nodeType": "thermometer",
+    "timestamp": "2020-08-05T12:22:23.756-0700"
+  },
+  {
+    "address": "test/onewire/C100100000267C7E/$node",
+    "attr": {
+      "Channel": "2",
+      "Health": "7",
+      "address": "C100100000267C7E",
+      "description": "Temperature, Humidity, Barometric Pressure and Light Sensor",
+      "model": "EDS0068"
+    },
+    "config": {
+      "name": {
+        "datatype": "string",
+        "description": "Human friendly node name"
+      },
+      "publishEvent": {
+        "datatype": "string",
+        "default": "false",
+        "description": "Enable publishing outputs as event"
+      },
+      "publishHistory": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing output history"
+      },
+      "publishLatest": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing latest output"
+      },
+      "publishRaw": {
+        "datatype": "boolean",
+        "default": "true",
+        "description": "Enable publishing raw outputs"
+      }
+    },
+    "deviceid": "C100100000267C7E",
+    "nodeid": "C100100000267C7E",
+    "nodeType": "multisensor",
+    "timestamp": "2020-08-05T12:22:23.756-0700"
+  }
+]

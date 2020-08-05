@@ -14,7 +14,6 @@ const DefaultGatewayID = "gateway"
 
 // OnewireAppConfig with application state, loaded from onewire.yaml
 type OnewireAppConfig struct {
-	PublisherID    string `yaml:"publisherId"`    // default publisher is app ID
 	GatewayAddress string `yaml:"gatewayAddress"` // default gateway IP address
 	GatewayID      string `yaml:"gatewayId"`      // default gateway node ID
 }
@@ -36,9 +35,9 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 	gwAddr := pub.MakeNodeDiscoveryAddress(gwID)
 	app.gatewayNodeAddr = gwAddr
 
-	gatewayNode := pub.GetNodeByID(gwID)
+	gatewayNode := pub.GetNodeByDeviceID(gwID)
 	if gatewayNode == nil {
-		pub.NewNode(gwID, types.NodeTypeGateway)
+		pub.CreateNode(gwID, types.NodeTypeGateway)
 	}
 	pub.UpdateNodeConfig(gwID, types.NodeAttrAddress, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
@@ -69,13 +68,10 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 		pub:    pub,
 		edsAPI: &EdsAPI{},
 	}
-	if app.config.PublisherID == "" {
-		app.config.PublisherID = AppID
-	}
 	if app.config.GatewayID == "" {
 		app.config.GatewayID = DefaultGatewayID
 	}
-	pub.NewNode(DefaultGatewayID, types.NodeTypeGateway)
+	pub.CreateNode(DefaultGatewayID, types.NodeTypeGateway)
 	pub.SetPollInterval(60, app.Poll)
 	// pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)
@@ -87,7 +83,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
-	appConfig := &OnewireAppConfig{PublisherID: AppID}
+	appConfig := &OnewireAppConfig{}
 	onewirePub, _ := publisher.NewAppPublisher(AppID, "", "", appConfig, true)
 
 	app := NewOnewireApp(appConfig, onewirePub)

@@ -32,7 +32,7 @@ func TestLoadConfig(t *testing.T) {
 	allNodes := pub.GetNodes()
 	assert.GreaterOrEqual(t, len(allNodes), 1, "Expected at least 1 node")
 
-	device := pub.GetNodeByID(Node1Id)
+	device := pub.GetNodeByDeviceID(Node1Id)
 	assert.NotNil(t, device, "Node 1 not loaded") // 1 device
 	pub.Stop()
 }
@@ -86,9 +86,10 @@ func TestParseNodeFile(t *testing.T) {
 
 	// Parameters should turn into node attributes
 	app.updateGateway(gwParams)
-	gwNode := pub.GetNodeByID(DefaultGatewayID)
+	gwNode := pub.GetNodeByDeviceID(DefaultGatewayID)
 	assert.Len(t, gwNode.Attr, 4, "Expected 4 attributes in gateway node")
-	assert.Len(t, gwNode.Status, 10, "Expected 10 status attributes in gateway node")
+	nrAttr := len(gwNode.Status)
+	assert.GreaterOrEqual(t, nrAttr, 10, "Expected 10 status attributes in gateway node")
 
 	// (re)discover any new sensor nodes and publish when changed
 	for _, node := range deviceNodes {
@@ -109,6 +110,7 @@ func TestParseNodeFile(t *testing.T) {
 
 func TestPollOnce(t *testing.T) {
 	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, false)
+	pub.SetSigningOnOff(false)
 	if !assert.NoError(t, err) {
 		return
 	}

@@ -1,14 +1,14 @@
 {
   "address": "test/onewire/$identity",
   "domain": "test",
-  "issuerName": "onewire",
+  "issuerId": "onewire",
   "location": "local",
   "organization": "",
-  "publicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEazukp2Ezy45qsDPZj7P1GoZIpwlv\nmKXhjuS3bwGpgVs6dVC7JVJ/H34dXNn74Zw3UPNH1LBiSeFdfqaWqpPDWQ==\n-----END PUBLIC KEY-----\n",
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEkDWNWJ1O+yeZR9wbql5QqJBmiUXg\nEtDdXZtpSorNmGMeSe77NlzdOTHGx+dml5HHW7YgkgcJxK4NseaSkwGeBw==\n-----END PUBLIC KEY-----\n",
   "publisherId": "onewire",
-  "validUntil": "2021-07-12T23:07:07.725-0700",
-  "signature": "4bTq2-FAoGWZ-R1iVhZ3wFkNzxEJ7ZJPBw5G_qTl3t0kTM2zWowY9imyUKmPeBOfflTkzaW0sDwPx6G810WFlA==",
-  "timestamp": "2020-07-12T23:07:07.725-0700",
-  "privateKey": "-----BEGIN PRIVATE KEY-----\nMHcCAQEEIEcXvMcBJuzoCeeUohwh+5X9LV4sVAjrClekCv/1/98yoAoGCCqGSM49\nAwEHoUQDQgAEazukp2Ezy45qsDPZj7P1GoZIpwlvmKXhjuS3bwGpgVs6dVC7JVJ/\nH34dXNn74Zw3UPNH1LBiSeFdfqaWqpPDWQ==\n-----END PRIVATE KEY-----\n",
+  "validUntil": "2021-08-05T21:47:57.199-0700",
+  "signature": "MEUCIQDUjaZy0hU9D_Gyi_lpopnKc-P6C17naIHUmDvpgIQB4gIgRpHvDSZ7VhH7SNnPqh9osXZxf0Ib-qok4d0w7h0tpCw=",
+  "timestamp": "2020-08-05T21:47:57.199-0700",
+  "privateKey": "-----BEGIN PRIVATE KEY-----\nMHcCAQEEIBXRdZjIC/9XWPpdxhzexmsNu0v3TSdMzwKCxScS8u++oAoGCCqGSM49\nAwEHoUQDQgAEkDWNWJ1O+yeZR9wbql5QqJBmiUXgEtDdXZtpSorNmGMeSe77Nlzd\nOTHGx+dml5HHW7YgkgcJxK4NseaSkwGeBw==\n-----END PRIVATE KEY-----\n",
   "sender": ""
  }

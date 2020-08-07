@@ -7,7 +7,8 @@ import (
 )
 
 // HandleConfigCommand handles requests to update node configuration
+// There are currently no node configurations to update to onewire
 func (app *OnewireApp) HandleConfigCommand(address string, config types.NodeAttrMap) types.NodeAttrMap {
-	logrus.Infof("OnewireApp.HandleConfigCommand for %s. Ignored as this isn't supported", address)
-	return nil
+	logrus.Infof("OnewireApp.HandleConfigCommand for %s.", address)
+	return config
 }

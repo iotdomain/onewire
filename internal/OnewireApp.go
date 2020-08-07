@@ -73,7 +73,6 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 	}
 	pub.CreateNode(DefaultGatewayID, types.NodeTypeGateway)
 	pub.SetPollInterval(60, app.Poll)
-	// pub.SetNodeInputHandler(app.HandleInputCommand)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)
 	// // Discover the node(s) and outputs. Use default for republishing discovery
 	// onewirePub.SetDiscoveryInterval(0, app.Discover)
@@ -84,7 +83,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
 	appConfig := &OnewireAppConfig{}
-	onewirePub, _ := publisher.NewAppPublisher(AppID, "", "", appConfig, true)
+	onewirePub, _ := publisher.NewAppPublisher(AppID, "", appConfig, true)
 
 	app := NewOnewireApp(appConfig, onewirePub)
 	app.SetupGatewayNode(onewirePub)

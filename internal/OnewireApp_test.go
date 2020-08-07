@@ -1,17 +1,18 @@
 package internal
 
 import (
+	"os"
 	"testing"
 	"time"
 
 	"github.com/iotdomain/iotdomain-go/messaging"
 	"github.com/iotdomain/iotdomain-go/publisher"
+	"github.com/iotdomain/iotdomain-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 // const gwAddress = "10.3.3.33"
 
-const cacheFolder = "../test/cache"
 const configFolder = "../test"
 const Node1Id = DefaultGatewayID
 
@@ -20,7 +21,8 @@ var appConfig = &OnewireAppConfig{}
 
 // TestLoadConfig load a node from config
 func TestLoadConfig(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, true)
+	os.Remove("../test/onewire-nodes.json")
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, true)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	assert.Equal(t, "10.3.3.33", appConfig.GatewayAddress)
 	assert.Equal(t, "onewire", pub.PublisherID())
@@ -46,13 +48,19 @@ func TestReadEdsFromFile(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, rootNode, "Expected root node")
 	assert.True(t, len(rootNode.Nodes) == 20, "Expected 20 parameters and nested")
+
+	// error case, unknown file
+	edsAPI.address = "file://../doesnotexist.xml"
+	rootNode, err = edsAPI.ReadEds()
+	assert.Error(t, err)
+
 }
 
 // Read EDS device and check if more than 1 node is returned. A minimum of 1 is expected if the device is online with
 // an additional node for each connected node.
-// This requires a live gateway on the above 'gwAddress'
+// NOTE: This requires a live gateway on the above 'gwAddress'
 func TestReadEdsFromGateway(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, true)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, true)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	pub.Start()
 
@@ -64,11 +72,19 @@ func TestReadEdsFromGateway(t *testing.T) {
 	assert.NotNil(t, rootNode, "Expected root node")
 	assert.GreaterOrEqual(t, len(rootNode.Nodes), 3, "Expected at least 3 nodes")
 	pub.Stop()
+
+	// error case - bad gateway
+	// error case, unknown file
+	edsAPI.address = "http://localhost/doesnotexist.xml"
+	rootNode, err = edsAPI.ReadEds()
+	assert.Error(t, err)
 }
 
 // Parse the nodes xml file and test for correct results
 func TestParseNodeFile(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, false)
+	// remove cached nodes first
+	os.Remove("../test/onewire-nodes.json")
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
 	pub.Start()
 	app := NewOnewireApp(appConfig, pub)
 
@@ -108,8 +124,17 @@ func TestParseNodeFile(t *testing.T) {
 
 }
 
+func TestHandleConfigInput(t *testing.T) {
+	pub, _ := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
+	app := NewOnewireApp(appConfig, pub)
+	// error cases
+	app.HandleConfigCommand("", make(types.NodeAttrMap))
+	app.HandleSetInput(nil, "nosender", "novalue")
+}
+
 func TestPollOnce(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, cacheFolder, appConfig, false)
+	os.Remove("../test/onewire-nodes.json")
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
 	pub.SetSigningOnOff(false)
 	if !assert.NoError(t, err) {
 		return
@@ -124,4 +149,16 @@ func TestPollOnce(t *testing.T) {
 	time.Sleep(3 * time.Second)
 
 	pub.Stop()
+
+	// error cases - don't panic when polling without address
+	os.Remove("../test/onewire-nodes.json")
+	pub, err = publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
+	appConfig.GatewayAddress = ""
+	app.config.GatewayAddress = ""
+	app = NewOnewireApp(appConfig, pub)
+	app.Poll(pub)
+
+	// error cases - don't panic when the gateway address is bad
+	app.config.GatewayAddress = "bad"
+	app.Poll(pub)
 }

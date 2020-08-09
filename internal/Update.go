@@ -81,6 +81,7 @@ func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
 	// EDS Nodes all have a ROMId that uniquely identifies the device on the 1-wire bus
 	deviceID, found := props["ROMId"]
 	if !found {
+		// this is incomplete device data
 		return
 	}
 	// Is this a new device?

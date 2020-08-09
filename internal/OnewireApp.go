@@ -26,30 +26,34 @@ type OnewireApp struct {
 	gatewayNodeAddr string  // currently running address of the gateway node
 }
 
-// SetupGatewayNode creates the gateway node if it doesn't exist
-// This set the default gateway address in its configuration
-func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
-	logrus.Info("SetupGatewayNode")
-	gwID := DefaultGatewayID
+// GatewayDeviceID return the device ID of the gateway node
+func (app *OnewireApp) GatewayDeviceID() string {
+	return app.config.GatewayID
+}
 
-	gwAddr := pub.MakeNodeDiscoveryAddress(gwID)
+// SetupGatewayNode creates the gateway device node
+// This set the default gateway address in its configuration
+func (app *OnewireApp) SetupGatewayNode(deviceID string) *types.NodeDiscoveryMessage {
+	logrus.Info("SetupGatewayNode")
+	pub := app.pub
+
+	gwAddr := pub.MakeNodeDiscoveryAddress(deviceID)
 	app.gatewayNodeAddr = gwAddr
 
-	gatewayNode := pub.GetNodeByDeviceID(gwID)
-	if gatewayNode == nil {
-		pub.CreateNode(gwID, types.NodeTypeGateway)
-	}
-	pub.UpdateNodeConfig(gwID, types.NodeAttrAddress, &types.ConfigAttr{
+	// Create new or use existing instance
+	gatewayNode := pub.CreateNode(deviceID, types.NodeTypeGateway)
+
+	pub.UpdateNodeConfig(deviceID, types.NodeAttrAddress, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
 		Description: "EDS Gateway IP address",
 		Default:     app.config.GatewayAddress,
 	})
-	pub.UpdateNodeConfig(gwID, types.NodeAttrLoginName, &types.ConfigAttr{
+	pub.UpdateNodeConfig(deviceID, types.NodeAttrLoginName, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
 		Description: "Login name of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
 	})
-	pub.UpdateNodeConfig(gwID, types.NodeAttrPassword, &types.ConfigAttr{
+	pub.UpdateNodeConfig(deviceID, types.NodeAttrPassword, &types.ConfigAttr{
 		DataType:    types.DataTypeString,
 		Description: "Password of the onewire gateway",
 		Secret:      true, // don't include value in discovery publication
@@ -57,7 +61,7 @@ func (app *OnewireApp) SetupGatewayNode(pub *publisher.Publisher) {
 
 	// Onewire OWS Gateway is a node with configuration for address, login name and credentials
 	// Gateway nodes are only discovered when a connection is made
-	// node
+	return gatewayNode
 }
 
 // NewOnewireApp creates the app
@@ -71,11 +75,12 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 	if app.config.GatewayID == "" {
 		app.config.GatewayID = DefaultGatewayID
 	}
-	pub.CreateNode(DefaultGatewayID, types.NodeTypeGateway)
+	// pub.CreateNode(DefaultGatewayID, types.NodeTypeGateway)
 	pub.SetPollInterval(60, app.Poll)
 	pub.SetNodeConfigHandler(app.HandleConfigCommand)
 	// // Discover the node(s) and outputs. Use default for republishing discovery
 	// onewirePub.SetDiscoveryInterval(0, app.Discover)
+	app.SetupGatewayNode(app.config.GatewayID)
 
 	return &app
 }
@@ -85,8 +90,7 @@ func Run() {
 	appConfig := &OnewireAppConfig{}
 	onewirePub, _ := publisher.NewAppPublisher(AppID, "", appConfig, true)
 
-	app := NewOnewireApp(appConfig, onewirePub)
-	app.SetupGatewayNode(onewirePub)
+	NewOnewireApp(appConfig, onewirePub)
 
 	onewirePub.Start()
 	onewirePub.WaitForSignal()

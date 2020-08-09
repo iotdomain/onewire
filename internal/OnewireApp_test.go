@@ -127,9 +127,19 @@ func TestParseNodeFile(t *testing.T) {
 func TestHandleConfigInput(t *testing.T) {
 	pub, _ := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
 	app := NewOnewireApp(appConfig, pub)
-	// error cases
-	app.HandleConfigCommand("", make(types.NodeAttrMap))
+	// gwNode := app.SetupGatewayNode()
+
+	// error cases - set nil config
+	c := app.HandleConfigCommand("", make(types.NodeAttrMap))
+	assert.NotNil(t, c)
+
+	// error case - set nil input
 	app.HandleSetInput(nil, "nosender", "novalue")
+
+	// error case - set input but nothing to set
+	gwID := app.GatewayDeviceID()
+	input := pub.CreateInput(gwID, types.InputTypeUnknown, types.DefaultInputInstance, nil)
+	app.HandleSetInput(input, "nosender", "novalue")
 }
 
 func TestPollOnce(t *testing.T) {
@@ -140,7 +150,7 @@ func TestPollOnce(t *testing.T) {
 		return
 	}
 	app := NewOnewireApp(appConfig, pub)
-	app.SetupGatewayNode(pub)
+	// app.SetupGatewayNode()
 
 	assert.NoError(t, err)
 	pub.Start()

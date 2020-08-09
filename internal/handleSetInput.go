@@ -14,5 +14,5 @@ func (app *OnewireApp) HandleSetInput(
 		logrus.Errorf("HandleSetInput: input is nil")
 		return
 	}
-	logrus.Infof("OnewireApp.HandleSetInput for %s. Ignored as this isn't supported", input.Address)
+	logrus.Warnf("OnewireApp.HandleSetInput for %s. Ignored as this isn't supported", input.Address)
 }

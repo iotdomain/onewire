@@ -52,7 +52,7 @@ func (app *OnewireApp) updateSensor(deviceID string, sensorNode *XMLNode) {
 		return
 	}
 
-	output := pub.GetOutput(deviceID, sensorType, types.DefaultOutputInstance)
+	output := pub.GetOutputByDevice(deviceID, sensorType, types.DefaultOutputInstance)
 	if output == nil {
 		// convert OneWire EDS data type to IoTDomain output types
 		rawUnit := sensorNode.Units

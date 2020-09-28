@@ -8,13 +8,14 @@ import (
 	"github.com/iotdomain/iotdomain-go/messaging"
 	"github.com/iotdomain/iotdomain-go/publisher"
 	"github.com/iotdomain/iotdomain-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 // const gwAddress = "10.3.3.33"
 
 const configFolder = "../test"
-const Node1Id = DefaultGatewayID
+const Node1HWID = types.NodeIDGateway
 
 var messengerConfig = &messaging.MessengerConfig{Domain: "test"}
 var appConfig = &OnewireAppConfig{}
@@ -34,7 +35,7 @@ func TestLoadConfig(t *testing.T) {
 	allNodes := pub.GetNodes()
 	assert.GreaterOrEqual(t, len(allNodes), 1, "Expected at least 1 node")
 
-	device := pub.GetNodeByDeviceID(Node1Id)
+	device := pub.GetNodeByHWID(Node1HWID)
 	assert.NotNil(t, device, "Node 1 not loaded") // 1 device
 	pub.Stop()
 }
@@ -102,8 +103,8 @@ func TestParseNodeFile(t *testing.T) {
 
 	// Parameters should turn into node attributes
 	app.updateGateway(gwParams)
-	gwNode := pub.GetNodeByDeviceID(DefaultGatewayID)
-	assert.Len(t, gwNode.Attr, 4, "Expected 4 attributes in gateway node")
+	gwNode := pub.GetNodeByHWID(types.NodeIDGateway)
+	assert.GreaterOrEqual(t, len(gwNode.Attr), 4, "Expected 4 or more attributes in gateway node")
 	nrAttr := len(gwNode.Status)
 	assert.GreaterOrEqual(t, nrAttr, 10, "Expected 10 status attributes in gateway node")
 
@@ -130,6 +131,7 @@ func TestHandleConfigInput(t *testing.T) {
 	// gwNode := app.SetupGatewayNode()
 
 	// error cases - set nil config
+	logrus.Infof("Testing config error cases")
 	c := app.HandleConfigCommand("", make(types.NodeAttrMap))
 	assert.NotNil(t, c)
 
@@ -137,7 +139,7 @@ func TestHandleConfigInput(t *testing.T) {
 	app.HandleSetInput(nil, "nosender", "novalue")
 
 	// error case - set input but nothing to set
-	gwID := app.GatewayDeviceID()
+	gwID := app.GatewayHWID()
 	input := pub.CreateInput(gwID, types.InputTypeUnknown, types.DefaultInputInstance, nil)
 	app.HandleSetInput(input, "nosender", "novalue")
 }

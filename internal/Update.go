@@ -42,7 +42,7 @@ var unitNameMap = map[string]types.Unit{
 // This publishes updates to the sensor value except when the sensor is configured as disabled
 // Limitations:
 //   This only identifies sensors with a unit. Writable is not supported.
-func (app *OnewireApp) updateSensor(deviceID string, sensorNode *XMLNode) {
+func (app *OnewireApp) updateSensor(nodeHWID string, sensorNode *XMLNode) {
 	pub := app.pub
 	rawName := sensorNode.XMLName.Local
 
@@ -52,23 +52,23 @@ func (app *OnewireApp) updateSensor(deviceID string, sensorNode *XMLNode) {
 		return
 	}
 
-	output := pub.GetOutputByDevice(deviceID, sensorType, types.DefaultOutputInstance)
+	output := pub.GetOutputByNodeHWID(nodeHWID, sensorType, types.DefaultOutputInstance)
 	if output == nil {
 		// convert OneWire EDS data type to IoTDomain output types
 		rawUnit := sensorNode.Units
-		output = pub.CreateOutput(deviceID, sensorType, types.DefaultOutputInstance)
+		output = pub.CreateOutput(nodeHWID, sensorType, types.DefaultOutputInstance)
 		output.Unit = unitNameMap[rawUnit]
 		pub.UpdateOutput(output)
 
 		// writable devices also have an input
 		if strings.ToLower(sensorNode.Writable) == "true" {
-			pub.CreateInput(deviceID, types.InputType(sensorType),
+			pub.CreateInput(nodeHWID, types.InputType(sensorType),
 				types.DefaultInputInstance, app.HandleSetInput)
 		}
 	}
 
 	newVal := string(sensorNode.Content)
-	pub.UpdateOutputValue(deviceID, sensorType, types.DefaultOutputInstance, newVal)
+	pub.UpdateOutputValue(nodeHWID, sensorType, types.DefaultOutputInstance, newVal)
 }
 
 // updateDevice. A new or existing onewire device has been seen.
@@ -79,13 +79,13 @@ func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
 	props, _ := app.edsAPI.ParseNodeParams(deviceOWNode)
 
 	// EDS Nodes all have a ROMId that uniquely identifies the device on the 1-wire bus
-	deviceID, found := props["ROMId"]
+	nodeHWID, found := props["ROMId"]
 	if !found {
 		// this is incomplete device data
 		return
 	}
 	// Is this a new device?
-	device := pub.GetNodeByDeviceID(deviceID)
+	device := pub.GetNodeByHWID(nodeHWID)
 	if device == nil {
 
 		// crude determination of device type
@@ -93,14 +93,14 @@ func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
 		if deviceType == "" {
 			deviceType = types.NodeTypeUnknown // can we determine this?
 		}
-		pub.CreateNode(deviceID, deviceType)
+		pub.CreateNode(nodeHWID, deviceType)
 		// device = app.pub.Nodes.AddNode(nodeID, nodes.NodeType(deviceType))
 	}
 
 	// An EDS device xml has an attribute Description that contains the product description
 	// Additional properties can be found in subnodes Name, Family, ROMId, Health, Channel
-	pub.UpdateNodeAttr(deviceID, map[types.NodeAttr]string{
-		types.NodeAttrAddress:     deviceID,
+	pub.UpdateNodeAttr(nodeHWID, map[types.NodeAttr]string{
+		types.NodeAttrAddress:     nodeHWID,
 		types.NodeAttrDescription: deviceOWNode.Description,
 		types.NodeAttrModel:       props["Name"],
 		"Health":                  props["Health"],
@@ -110,7 +110,7 @@ func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
 	//Publish newly discovered sensors and update the values of previously discovered properties
 	for _, propXML := range deviceOWNode.Nodes {
 		// TODO: create sensors first before publishing values to reduce the nr of device info postings during initial discovery
-		app.updateSensor(deviceID, &propXML)
+		app.updateSensor(nodeHWID, &propXML)
 	}
 }
 
@@ -119,7 +119,7 @@ func (app *OnewireApp) updateDevice(deviceOWNode *XMLNode) {
 // Returns the gateway device node
 func (app *OnewireApp) updateGateway(gwParams map[string]string) {
 	pub := app.pub
-	pub.UpdateNodeAttr(app.config.GatewayID, map[types.NodeAttr]string{
+	pub.UpdateNodeAttr(app.GatewayHWID(), map[types.NodeAttr]string{
 		types.NodeAttrMAC:          gwParams["MACAddress"],
 		types.NodeAttrHostname:     gwParams["HostName"],
 		types.NodeAttrManufacturer: "Embedded Data Systems (EDS)",
@@ -127,7 +127,7 @@ func (app *OnewireApp) updateGateway(gwParams map[string]string) {
 	})
 
 	// OWServer ENet specific attributes. These could be sensors if there is a need
-	pub.UpdateNodeStatus(app.config.GatewayID, map[types.NodeStatus]string{
+	pub.UpdateNodeStatus(app.GatewayHWID(), map[types.NodeStatusAttr]string{
 		"DevicesConnected":         gwParams["DevicesConnected"],
 		"DevicesConnectedChannel1": gwParams["DevicesConnectedChannel1"],
 		"DevicesConnectedChannel2": gwParams["DevicesConnectedChannel2"],

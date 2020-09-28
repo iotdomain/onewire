@@ -1,6 +1,6 @@
 package main
 
-import "onewire/internal"
+import "./internal"
 
 func main() {
 	internal.Run()

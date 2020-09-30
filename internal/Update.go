@@ -127,7 +127,7 @@ func (app *OnewireApp) updateGateway(gwParams map[string]string) {
 	})
 
 	// OWServer ENet specific attributes. These could be sensors if there is a need
-	pub.UpdateNodeStatus(app.GatewayHWID(), map[types.NodeStatusAttr]string{
+	pub.UpdateNodeStatus(app.GatewayHWID(), map[types.NodeStatus]string{
 		"DevicesConnected":         gwParams["DevicesConnected"],
 		"DevicesConnectedChannel1": gwParams["DevicesConnectedChannel1"],
 		"DevicesConnectedChannel2": gwParams["DevicesConnectedChannel2"],

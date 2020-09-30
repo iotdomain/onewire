@@ -81,7 +81,7 @@ func NewOnewireApp(config *OnewireAppConfig, pub *publisher.Publisher) *OnewireA
 // Run the publisher until the SIGTERM  or SIGINT signal is received
 func Run() {
 	appConfig := &OnewireAppConfig{}
-	onewirePub, _ := publisher.NewAppPublisher(AppID, "", appConfig, true)
+	onewirePub, _ := publisher.NewAppPublisher(AppID, "", appConfig, "", true)
 
 	NewOnewireApp(appConfig, onewirePub)
 

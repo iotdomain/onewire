@@ -23,7 +23,7 @@ var appConfig = &OnewireAppConfig{}
 // TestLoadConfig load a node from config
 func TestLoadConfig(t *testing.T) {
 	os.Remove("../test/onewire-nodes.json")
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, true)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, "", true)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	assert.Equal(t, "10.3.3.33", appConfig.GatewayAddress)
 	assert.Equal(t, "onewire", pub.PublisherID())
@@ -61,7 +61,7 @@ func TestReadEdsFromFile(t *testing.T) {
 // an additional node for each connected node.
 // NOTE: This requires a live gateway on the above 'gwAddress'
 func TestReadEdsFromGateway(t *testing.T) {
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, true)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, configFolder, true)
 	assert.NoError(t, err, "Failed creating AppPublisher")
 	pub.Start()
 
@@ -85,7 +85,7 @@ func TestReadEdsFromGateway(t *testing.T) {
 func TestParseNodeFile(t *testing.T) {
 	// remove cached nodes first
 	os.Remove("../test/onewire-nodes.json")
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, "", false)
 	pub.Start()
 	app := NewOnewireApp(appConfig, pub)
 
@@ -126,14 +126,14 @@ func TestParseNodeFile(t *testing.T) {
 }
 
 func TestHandleConfigInput(t *testing.T) {
-	pub, _ := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
+	pub, _ := publisher.NewAppPublisher(AppID, configFolder, appConfig, "", false)
 	app := NewOnewireApp(appConfig, pub)
 	// gwNode := app.SetupGatewayNode()
 
 	// error cases - set nil config
 	logrus.Infof("Testing config error cases")
-	c := app.HandleConfigCommand("", make(types.NodeAttrMap))
-	assert.NotNil(t, c)
+	config := types.NodeAttrMap{}
+	app.HandleConfigCommand("", config)
 
 	// error case - set nil input
 	app.HandleSetInput(nil, "nosender", "novalue")
@@ -146,7 +146,7 @@ func TestHandleConfigInput(t *testing.T) {
 
 func TestPollOnce(t *testing.T) {
 	os.Remove("../test/onewire-nodes.json")
-	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
+	pub, err := publisher.NewAppPublisher(AppID, configFolder, appConfig, "", false)
 	pub.SetSigningOnOff(false)
 	if !assert.NoError(t, err) {
 		return
@@ -164,7 +164,7 @@ func TestPollOnce(t *testing.T) {
 
 	// error cases - don't panic when polling without address
 	os.Remove("../test/onewire-nodes.json")
-	pub, err = publisher.NewAppPublisher(AppID, configFolder, appConfig, false)
+	pub, err = publisher.NewAppPublisher(AppID, configFolder, appConfig, "", false)
 	appConfig.GatewayAddress = ""
 	app.config.GatewayAddress = ""
 	app = NewOnewireApp(appConfig, pub)

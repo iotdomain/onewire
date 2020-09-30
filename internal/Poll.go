@@ -23,7 +23,7 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	if edsAPI.address == "" {
 		err := errors.New("a Gateway address has not been configured")
 		logrus.Infof(err.Error())
-		pub.UpdateNodeErrorStatus(gwID, types.NodeStateError, err.Error())
+		pub.UpdateNodeErrorStatus(gwID, types.NodeRunStateError, err.Error())
 		return
 	}
 	startTime := time.Now()
@@ -34,18 +34,18 @@ func (app *OnewireApp) Poll(pub *publisher.Publisher) {
 	if err != nil {
 		err := fmt.Errorf("unable to connect to the gateway at %s", edsAPI.address)
 		logrus.Infof(err.Error())
-		pub.UpdateNodeErrorStatus(gwID, types.NodeStateError, err.Error())
+		pub.UpdateNodeErrorStatus(gwID, types.NodeRunStateError, err.Error())
 		return
 	}
-	pub.UpdateNodeErrorStatus(gwID, types.NodeStateReady, "")
+	pub.UpdateNodeErrorStatus(gwID, types.NodeRunStateReady, "")
 
 	// (re)discover the nodes on the gateway
 	gwParams, deviceNodes := edsAPI.ParseNodeParams(rootNode)
 	app.updateGateway(gwParams)
-	pub.UpdateNodeStatus(gwID, map[types.NodeStatusAttr]string{
-		types.NodeStatusAttrState:       string(types.NodeStateReady),
-		types.NodeStatusAttrLastError:   "",
-		types.NodeStatusAttrLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
+	pub.UpdateNodeStatus(gwID, map[types.NodeStatus]string{
+		types.NodeStatusRunState:    string(types.NodeRunStateReady),
+		types.NodeStatusLastError:   "",
+		types.NodeStatusLatencyMSec: fmt.Sprintf("%d", latency.Milliseconds()),
 	})
 
 	// (re)discover any new sensor nodes and publish when changed
